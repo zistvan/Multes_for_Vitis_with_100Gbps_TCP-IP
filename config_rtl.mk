@@ -3,7 +3,7 @@ $(TEMP_DIR)/${KRNL_1}.xo: kernel/network_krnl/network_krnl.xml kernel/network_kr
 	mkdir -p $(TEMP_DIR)
 	$(VIVADO) -mode batch -source scripts/gen_xo.tcl -tclargs $(TEMP_DIR)/${KRNL_1}.xo ${KRNL_1} $(TARGET) $(DEVICE) $(XSA) kernel/network_krnl/network_krnl.xml kernel/network_krnl/package_network_krnl.tcl
 
-$(TEMP_DIR)/${KRNL_2}.xo: kernel/user_krnl/${KRNL_2}/${KRNL_2}.xml kernel/user_krnl/${KRNL_2}/package_${KRNL_2}.tcl scripts/gen_xo.tcl kernel/user_krnl/${KRNL_2}/src/hdl/*.sv
+$(TEMP_DIR)/${KRNL_2}.xo: kernel/user_krnl/${KRNL_2}/${KRNL_2}.xml kernel/user_krnl/${KRNL_2}/package_${KRNL_2}.tcl scripts/gen_xo.tcl kernel/user_krnl/${KRNL_2}/src/hdl/*v
 	mkdir -p $(TEMP_DIR)
 	$(VIVADO) -mode batch -source scripts/gen_xo.tcl -tclargs $(TEMP_DIR)/${KRNL_2}.xo ${KRNL_2} $(TARGET) $(DEVICE) $(XSA) kernel/user_krnl/${KRNL_2}/${KRNL_2}.xml kernel/user_krnl/${KRNL_2}/package_${KRNL_2}.tcl
 
