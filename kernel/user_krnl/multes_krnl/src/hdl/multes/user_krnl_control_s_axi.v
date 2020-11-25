@@ -41,7 +41,9 @@ module user_krnl_control_s_axi
     output wire [31:0]                   dualModeEn,
     output wire [31:0]                   packetGap,
     output wire [31:0]                   timeInSeconds,
-    output wire [63:0]                   timeInCycles
+    output wire [63:0]                   timeInCycles,
+    output wire [63:0]                   axi00_ptr0,
+    output wire [63:0]                   axi01_ptr0
 );
 //------------------------Address Info-------------------
 // 0x00 : Control signals
@@ -91,6 +93,16 @@ module user_krnl_control_s_axi
 // 0x54 : Data signal of timeInCycles
 //        bit 31~0 - timeInCycles[63:32] (Read/Write)
 // 0x58 : reserved
+// 0x5c : Data signal of axi00_ptr0
+//        bit 31~0 - axi00_ptr0[31:0] (Read/Write)
+// 0x60 : Data signal of axi00_ptr0
+//        bit 31~0 - axi00_ptr0[63:32] (Read/Write)
+// 0x64 : reserved
+// 0x68 : Data signal of axi01_ptr0
+//        bit 31~0 - axi01_ptr0[31:0] (Read/Write)
+// 0x6c : Data signal of axi01_ptr0
+//        bit 31~0 - axi01_ptr0[63:32] (Read/Write)
+// 0x70 : reserved
 // (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
 
 //------------------------Parameter----------------------
@@ -118,6 +130,12 @@ localparam
     ADDR_TIMEINCYCLES_DATA_0  = 7'h50,
     ADDR_TIMEINCYCLES_DATA_1  = 7'h54,
     ADDR_TIMEINCYCLES_CTRL    = 7'h58,
+    ADDR_AXI00_PTR0_DATA_0    = 7'h5c,
+    ADDR_AXI00_PTR0_DATA_1    = 7'h60,
+    ADDR_AXI00_PTR0_CTRL      = 7'h64,
+    ADDR_AXI01_PTR0_DATA_0    = 7'h68,
+    ADDR_AXI01_PTR0_DATA_1    = 7'h6c,
+    ADDR_AXI01_PTR0_CTRL      = 7'h70,
     WRIDLE                    = 2'd0,
     WRDATA                    = 2'd1,
     WRRESP                    = 2'd2,
@@ -157,6 +175,8 @@ localparam
     reg  [31:0]                   int_packetGap = 'b0;
     reg  [31:0]                   int_timeInSeconds = 'b0;
     reg  [63:0]                   int_timeInCycles = 'b0;
+    reg  [63:0]                   int_axi00_ptr0 = 'b0;
+    reg  [63:0]                   int_axi01_ptr0 = 'b0;
 
 //------------------------Instantiation------------------
 
@@ -294,6 +314,18 @@ always @(posedge ACLK) begin
                 ADDR_TIMEINCYCLES_DATA_1: begin
                     rdata <= int_timeInCycles[63:32];
                 end
+                ADDR_AXI00_PTR0_DATA_0: begin
+                    rdata <= int_axi00_ptr0[31:0];
+                end
+                ADDR_AXI00_PTR0_DATA_1: begin
+                    rdata <= int_axi00_ptr0[63:32];
+                end
+                ADDR_AXI01_PTR0_DATA_0: begin
+                    rdata <= int_axi01_ptr0[31:0];
+                end
+                ADDR_AXI01_PTR0_DATA_1: begin
+                    rdata <= int_axi01_ptr0[63:32];
+                end
             endcase
         end
     end
@@ -312,6 +344,8 @@ assign dualModeEn    = int_dualModeEn;
 assign packetGap     = int_packetGap;
 assign timeInSeconds = int_timeInSeconds;
 assign timeInCycles  = int_timeInCycles;
+assign axi00_ptr0    = int_axi00_ptr0;
+assign axi01_ptr0    = int_axi01_ptr0;
 // int_ap_start
 always @(posedge ACLK) begin
     if (ARESET)
@@ -505,6 +539,46 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_TIMEINCYCLES_DATA_1)
             int_timeInCycles[63:32] <= (WDATA[31:0] & wmask) | (int_timeInCycles[63:32] & ~wmask);
+    end
+end
+
+// int_axi00_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi00_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI00_PTR0_DATA_0)
+            int_axi00_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi00_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi00_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi00_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI00_PTR0_DATA_1)
+            int_axi00_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi00_ptr0[63:32] & ~wmask);
+    end
+end
+
+// int_axi01_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi01_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI01_PTR0_DATA_0)
+            int_axi01_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi01_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi01_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi01_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI01_PTR0_DATA_1)
+            int_axi01_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi01_ptr0[63:32] & ~wmask);
     end
 end
 

@@ -146,7 +146,7 @@ module ipcore_top_multes
 
         // Slave Interface Write Address Ports
         output wire  [3:0]                                 c0_s_axi_awid,
-        output wire  [33:0]                                c0_s_axi_awaddr,
+        output wire  [63:0]                                c0_s_axi_awaddr,
         output wire  [7:0]                                 c0_s_axi_awlen,
         output wire  [2:0]                                 c0_s_axi_awsize,
         output wire  [1:0]                                 c0_s_axi_awburst,
@@ -166,7 +166,7 @@ module ipcore_top_multes
         input wire                       c0_s_axi_bvalid,
         // Slave Interface Read Address Ports
         output wire  [3:0]                c0_s_axi_arid,
-        output wire  [33:0]          c0_s_axi_araddr,
+        output wire  [63:0]          c0_s_axi_araddr,
         output wire  [7:0]                                 c0_s_axi_arlen,
         output wire  [2:0]                                 c0_s_axi_arsize,
         output wire  [1:0]                                 c0_s_axi_arburst,
@@ -183,7 +183,7 @@ module ipcore_top_multes
 
         // Slave Interface Write Address Ports
         output wire  [3:0]                                 c1_s_axi_awid,
-        output wire  [33:0]                                c1_s_axi_awaddr,
+        output wire  [63:0]                                c1_s_axi_awaddr,
         output wire  [7:0]                                 c1_s_axi_awlen,
         output wire  [2:0]                                 c1_s_axi_awsize,
         output wire  [1:0]                                 c1_s_axi_awburst,
@@ -203,7 +203,7 @@ module ipcore_top_multes
         input wire                       c1_s_axi_bvalid,
         // Slave Interface Read Address Ports
         output wire  [3:0]                c1_s_axi_arid,
-        output wire  [33:0]          c1_s_axi_araddr,
+        output wire  [63:0]          c1_s_axi_araddr,
         output wire  [7:0]                                 c1_s_axi_arlen,
         output wire  [2:0]                                 c1_s_axi_arsize,
         output wire  [1:0]                                 c1_s_axi_arburst,
@@ -344,7 +344,15 @@ assign interrupt = 1'b0;
   wire         bmap_wrcmd_ready;
 
 
+//convert 34 bit mem address to 64 bit mem address offset by axi pointer
+wire [33:0] c0_awaddr, c0_araddr, c1_araddr, c1_awaddr;
+wire [63:0] axi00_ptr0, axi01_ptr0;
 
+assign c0_s_axi_awaddr = axi00_ptr0 + c0_awaddr;
+assign c0_s_axi_araddr = axi00_ptr0 + c0_araddr;
+
+assign c1_s_axi_awaddr = axi01_ptr0 + c1_awaddr;
+assign c1_s_axi_araddr = axi01_ptr0 + c1_araddr;
 
 //DRAM MEM interface
 
@@ -604,7 +612,7 @@ muu_memory_datamovers  mem_inf_inst
 
 
   .c0_s_axi_awid(c0_s_axi_awid),
-  .c0_s_axi_awaddr(c0_s_axi_awaddr),
+  .c0_s_axi_awaddr(c0_awaddr),
   .c0_s_axi_awlen(c0_s_axi_awlen),
   .c0_s_axi_awsize(c0_s_axi_awsize),
   .c0_s_axi_awburst(c0_s_axi_awburst),
@@ -622,7 +630,7 @@ muu_memory_datamovers  mem_inf_inst
   .c0_s_axi_bvalid(c0_s_axi_bvalid),
   
   .c0_s_axi_arid(c0_s_axi_arid),
-  .c0_s_axi_araddr(c0_s_axi_araddr),
+  .c0_s_axi_araddr(c0_araddr),
   .c0_s_axi_arlen(c0_s_axi_arlen),
   .c0_s_axi_arsize(c0_s_axi_arsize),
   .c0_s_axi_arburst(c0_s_axi_arburst),
@@ -639,7 +647,7 @@ muu_memory_datamovers  mem_inf_inst
 
 
   .c1_s_axi_awid(c1_s_axi_awid),
-  .c1_s_axi_awaddr(c1_s_axi_awaddr),
+  .c1_s_axi_awaddr(c1_awaddr),
   .c1_s_axi_awlen(c1_s_axi_awlen),
   .c1_s_axi_awsize(c1_s_axi_awsize),
   .c1_s_axi_awburst(c1_s_axi_awburst),
@@ -657,7 +665,7 @@ muu_memory_datamovers  mem_inf_inst
   .c1_s_axi_bvalid(c1_s_axi_bvalid),
   
   .c1_s_axi_arid(c1_s_axi_arid),
-  .c1_s_axi_araddr(c1_s_axi_araddr),
+  .c1_s_axi_araddr(c1_araddr),
   .c1_s_axi_arlen(c1_s_axi_arlen),
   .c1_s_axi_arsize(c1_s_axi_arsize),
   .c1_s_axi_arburst(c1_s_axi_arburst),
@@ -749,7 +757,9 @@ inst_control_s_axi (
   .dualModeEn             ( dualMode          ),   
   .packetGap              ( packetGap              ),
   .timeInSeconds          ( timeInSeconds     ),
-  .timeInCycles           ( timeInCycles      )//64 bit
+  .timeInCycles           ( timeInCycles      ),//64 bit
+  .axi00_ptr0             ( axi00_ptr0 ),
+  .axi01_ptr0             ( axi01_ptr0 )
 );
 
 
