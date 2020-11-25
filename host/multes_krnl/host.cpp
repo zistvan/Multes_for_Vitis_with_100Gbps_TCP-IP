@@ -133,20 +133,20 @@ int main(int argc, char **argv) {
     printf("enqueue network kernel...\n");
     OCL_CHECK(err, err = q.enqueueTask(network_kernel));
     
-    //set user kernel argument
-    uint32_t numPacketWord = 16; //each packet is 1 KB
-    uint32_t connection = 1; //number of connection
-    uint32_t numIpAddr = 1; //number of IP address used
-    uint32_t responseInKB = 0;
-    //uint32_t baseIpAddr = 0x0A01D479; //alveo1a
-    uint32_t baseIpAddr = 0x0A01D46E; // alveo0
-    //uint32_t baseIpAddr = 0x0A01D499; //fpga server
-    //uint32_t baseIpAddr = 0x0A01D48C;//catapult10
-    uint32_t basePort = 5001; 
-    uint32_t delayedCycles = 0;
-    uint32_t clientPkgNum = 100;
+        // Set iperf kernel arguments
 
+    uint32_t numPacketWord = 22;
+    uint32_t connection = 1;
+    uint32_t numIpAddr = 1;
+    uint32_t basePort = 5001; 
+    uint32_t packetGap = 0;
+    uint32_t dualModeEn = 0;
     double durationUs = 0.0;
+    uint32_t timeInSeconds = 10;
+    //set destination IP address
+    uint32_t baseIpAddr = 0x0A01D479; //alveo1a
+    //uint32_t baseIpAddr = 0x0A01D499; //fpga server
+    //uint32_t baseIpAddr = 0x0A01D46E; //alveo0
 
     if (argc >= 3)
     {
@@ -167,35 +167,30 @@ int main(int argc, char **argv) {
     }
 
     if(argc >=4)
-        basePort = strtol(argv[3], NULL, 10);
+        connection = strtol(argv[3], NULL, 10);
 
-    if(argc >=5)
-        connection = strtol(argv[4], NULL, 10);
+    if(argc >= 5)
+        timeInSeconds = strtol(argv[4], NULL, 10);
 
-    if(argc >= 6)
-        clientPkgNum = strtol(argv[5], NULL, 10);
-
-    printf("IP_ADDR:%x\n", baseIpAddr);
-    printf("base Port:%d\n", basePort);
-    printf("number of connection:%d\n",connection);
-    printf("number of Tx pkg:%d\n", clientPkgNum);
-    printf("Packet size[Byte]:%d\n", numPacketWord*64);
-
-    uint32_t numPort = connection / numIpAddr;
     
-    uint32_t expectedRespInKBTotal = connection * responseInKB;
+    //Default Clocking frequency 250MHz
+    uint64_t timeInCycles =( (uint64_t) timeInSeconds * 250000000);
+
+
+    printf("number of connection:%d\n",connection);
+    printf("IP_ADDR:%x\n", baseIpAddr);
+    printf("time in seconds: %d, time in cycles:%llu\n", timeInSeconds, timeInCycles);
 
     //Set user Kernel Arguments
     OCL_CHECK(err, err = user_kernel.setArg(0, connection));
     OCL_CHECK(err, err = user_kernel.setArg(1, numIpAddr));
     OCL_CHECK(err, err = user_kernel.setArg(2, numPacketWord));
     OCL_CHECK(err, err = user_kernel.setArg(3, basePort));
-    OCL_CHECK(err, err = user_kernel.setArg(4, numPort));
-    OCL_CHECK(err, err = user_kernel.setArg(5, responseInKB));
-    OCL_CHECK(err, err = user_kernel.setArg(6, delayedCycles));
-    OCL_CHECK(err, err = user_kernel.setArg(7, baseIpAddr));
-    OCL_CHECK(err, err = user_kernel.setArg(8, expectedRespInKBTotal));
-    OCL_CHECK(err, err = user_kernel.setArg(9, clientPkgNum));
+    OCL_CHECK(err, err = user_kernel.setArg(4, baseIpAddr));
+    OCL_CHECK(err, err = user_kernel.setArg(5, dualModeEn));
+    OCL_CHECK(err, err = user_kernel.setArg(6, packetGap));
+    OCL_CHECK(err, err = user_kernel.setArg(7, timeInSeconds));
+    OCL_CHECK(err, err = user_kernel.setArg(8, timeInCycles));
     
     OCL_CHECK(err,
             cl::Buffer buffer_1(context,
@@ -211,8 +206,8 @@ int main(int argc, char **argv) {
                                 user_ptr1.data(),
                                 &err));
 
-    OCL_CHECK(err, err = user_kernel.setArg(10, buffer_1));
-    OCL_CHECK(err, err = user_kernel.setArg(11, buffer_2));
+    OCL_CHECK(err, err = user_kernel.setArg(9, buffer_1));
+    OCL_CHECK(err, err = user_kernel.setArg(10, buffer_2));
 
     //Launch the Kernel
     printf("enqueue scatter kernel...\n");

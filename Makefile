@@ -80,7 +80,7 @@ endif
 
 # Kernel compiler global settings
 CLFLAGS += -t $(TARGET) --platform $(DEVICE) --save-temps #--config $(CONFIGLINKTCL)
-CLFLAGS += --kernel_frequency 250
+CLFLAGS += --kernel_frequency 200
 ifneq ($(TARGET), hw)
   CLFLAGS += -g
 endif
@@ -91,7 +91,7 @@ endif
 $(info $$DEVICE is [${DEVICE}])
 $(info $$POSTSYSLINKTCL is [${POSTSYSLINKTCL}])
 CLFLAGS += --advanced.param compiler.userPostSysLinkTcl=$(POSTSYSLINKTCL) #--xp param:compiler.userPostSysLinkTcl=$(POSTSYSLINKTCL)
-#CLFLAGS += --dk chipscope:network_krnl_1:m_axis_tcp_open_status --dk chipscope:network_krnl_1:s_axis_tcp_tx_meta --dk chipscope:network_krnl_1:s_axis_tcp_open_connection
+CLFLAGS += --dk chipscope:network_krnl_1:m00_axi --dk chipscope:network_krnl_1:m_axis_tcp_port_status --dk chipscope:network_krnl_1:m_axis_tcp_open_status --dk chipscope:network_krnl_1:m_axis_tcp_tx_status --dk chipscope:network_krnl_1:m_axis_tcp_notification --dk chipscope:${USER_KRNL}_1:s_axi_control
 CLFLAGS += --config ./kernel/user_krnl/${USER_KRNL}/config_sp_${USER_KRNL}.txt
 # CLFLAGS += --profile_kernel stall:${USER_KRNL}:all:all
 #endif
