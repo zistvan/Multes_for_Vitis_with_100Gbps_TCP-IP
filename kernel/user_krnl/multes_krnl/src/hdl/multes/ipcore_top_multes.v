@@ -526,7 +526,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .fclk(fclk),
   
   .aclk(uclk),                                                          // input wire aclk
-  .aresetn(~runExperiment)                                                    // input wire aresetn
+  .aresetn(ap_start_r)                                                    // input wire aresetn
 );
 
 
@@ -539,7 +539,7 @@ muu_memory_datamovers  mem_inf_inst
 .sys_clk(uclk),
 
 .user_clk(uclk),
-.user_rst_n(runExperiment),
+.user_rst_n(ap_start_r),
 
   // HashTable DRAM Connection
 
