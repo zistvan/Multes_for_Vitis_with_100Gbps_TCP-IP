@@ -30,7 +30,7 @@ module muu_Top_Module_LMem512 #(
     parameter KEY_WIDTH = 64,
     parameter HASHTABLE_MEM_SIZE = 20,
     parameter VALUESTORE_MEM_SIZE = 24,
-    parameter FILTER_ENABLED=1,
+    parameter FILTER_ENABLED=0,
 	parameter IS_SIM = 0,
     parameter USER_BITS = 3,
     parameter ENABLE_CHECKPOINTS = 0 // to simplify porting to 512 bits!
