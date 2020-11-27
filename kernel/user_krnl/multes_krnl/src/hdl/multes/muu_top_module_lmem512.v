@@ -140,6 +140,28 @@ module muu_Top_Module_LMem512 #(
     input  wire       s_axis_open_status_TVALID,
     output wire       s_axis_open_status_TREADY,
     input  wire [23:0]      s_axis_open_status_TDATA,
+
+
+
+    output wire [512-1:0]  val_to_proc_TDATA,
+	output wire         val_to_proc_TVALID,
+	output wire         val_to_proc_TLAST,
+	input wire         val_to_proc_TREADY,
+
+	output wire [512-1:0]  par_to_proc_TDATA,
+	output wire         par_to_proc_TVALID,
+	output wire         par_to_proc_TLAST,
+	input wire         par_to_proc_TREADY,
+
+	input wire [512-1:0]  val_from_proc_TDATA,
+	input wire         val_from_proc_TVALID,
+	input wire         val_from_proc_TLAST,
+	output wire         val_from_proc_TREADY,
+
+	input wire [0:0]  par_from_proc_TDATA,
+	input wire         par_from_proc_TVALID,
+	input wire         par_from_proc_TLAST,
+	output wire         par_from_proc_TREADY,
 	
 	output wire [7:0]        debug
 );
@@ -1740,7 +1762,7 @@ generate
     if (FILTER_ENABLED==0) begin
         //no filters in the project, cuts out whole part
         assign cond_valid = predconf_b_valid;
-        assign cond_drop = (predconf_b_valid ==1 && predconf_b_data==0) ? 0 : 1;
+        assign cond_drop = (predconf_b_valid ==1 && predconf_b_data[511:0]==0) ? 0 : 1;
         assign predconf_b_ready = cond_ready;
 
         assign value_read_ready_buf = value_read_ready;
@@ -1757,17 +1779,25 @@ generate
         .value_valid(value_read_valid_buf),
         .value_ready(value_read_ready_buf),
 
-        .output_data(value_read_data),
-        .output_last(value_read_last),
-        .output_valid(value_read_valid),
-        .output_ready(value_read_ready)
-    );
+        .output_data(val_to_proc_TDATA),
+        .output_last(val_to_proc_TLAST),
+        .output_valid(val_to_proc_TVALID),
+        .output_ready(val_to_proc_TREADY)
+   		 );
     
-    assign cond_valid = predconf_b_valid;
-    assign cond_drop = (predconf_b_valid ==1 && predconf_b_data==0) ? 0 : 1;
-    assign predconf_b_ready = cond_ready;
+	    assign par_to_proc_TVALID = predconf_b_valid;
+	    assign par_to_proc_TLAST = 1;
+	    assign par_to_proc_TDATA = predconf_b_data[511:0];
+	    assign predconf_b_ready = par_to_proc_TREADY;
 
-        
+	    assign cond_valid = par_from_proc_TVALID;
+	    assign cond_drop = par_to_proc_TDATA == 0 ? 0 : 1;
+	    assign par_from_proc_TREADY = cond_ready;
+
+	    assign value_valid = val_from_proc_TVALID;
+	    assign value_data  = val_from_proc_TDATA;
+	    assign value_last = val_from_proc_TLAST;
+	    assign val_from_proc_TREADY = value_ready;
 
     end
 endgenerate
