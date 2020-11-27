@@ -542,10 +542,10 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
 
                 it := new(Item)
 
-                it.Value = make([]byte, int(size[0])*8)
-                it.Value, err = rw.Peek(int(size[0])*8)
+                it.Value = make([]byte, int(size[0])*64)
+                it.Value, err = rw.Peek(int(size[0])*64)
               
-                rw.Discard(int(size[0])*8*8)
+                rw.Discard(int(size[0])*64)
 
                 if err != nil {
                   return err
@@ -555,7 +555,7 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
 
               } else {
 
-                rw.Discard(int(size[0])*8*8)
+                rw.Discard(int(size[0])*64)
 
                 if err != nil {
                   return err
@@ -654,11 +654,11 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
 
   		length := len(mheader) + 64
 
-  		if length % 8 != 0 {
-  			padLen = 8 - (length % 8)
+  		if length % 64 != 0 {
+  			padLen = 64 - (length % 64)
   		}
   		length += padLen
-  		length /= 8
+  		length /= 64
 
     //
 
@@ -675,10 +675,19 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
   			return err
   		}
 
+      for i:=0; i<6; i++ {
+        rw.Write(padding)
+      }
+
 
   		if _, err := fmt.Fprintf(rw, "%s", mheader); err != nil {
   			return err
   		}
+
+      for i:=0; i<7; i++ {
+        rw.Write(padding)
+      }
+
   		if _,err := rw.Write(cfg); err != nil {
   			return err
   		}
@@ -870,22 +879,22 @@ func (c *Client) multiRetFromAddr(addr net.Addr, keys []string, cb func(*Item), 
 
           
           if success[0] == 0 {
-            rw.Discard(4+8)
+            rw.Discard(60+64)
             return errors.New("nukv: cache miss")
           }        
 
           if size[0] == 0 {
-            rw.Discard(4)
+            rw.Discard(60)
           } else {
-            rw.Discard(4+8)
+            rw.Discard(60+64)
           }
 
           if size[0] != 0 {
 
 
-            pline, err = rw.Peek(int(size[0])*8)
+            pline, err = rw.Peek(int(size[0])*64)
             vals.Write(pline)
-            rw.Discard(int(size[0])*8)
+            rw.Discard(int(size[0])*64)
 
           } 
           if err != nil {
@@ -939,7 +948,7 @@ func (c *Client) multiRetFromAddr(addr net.Addr, keys []string, cb func(*Item), 
   			return err
   		}
 
-  		pline, err := rw.Reader.Peek(16)
+  		pline, err := rw.Reader.Peek(16+56+56)
   		if err == nil {
   			rw.Reader.Discard(16+56+56)
   		} else {
@@ -1060,9 +1069,9 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 
 			it := new(Item)
 
-			it.Value = make([]byte, int(size[0])*8)
-			it.Value, err = r.Peek(int(size[0])*8)
-			_, err = r.Discard(int(size[0])*8*8)
+			it.Value = make([]byte, int(size[0])*64)
+			it.Value, err = r.Peek(int(size[0])*64)
+			_, err = r.Discard(int(size[0])*64)
 			if err != nil {
 				return err
 			}
@@ -1103,24 +1112,24 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 
 			
 			if success[0] == 0 && size[0] == 0  {
-				r.Discard(4+8)
+				r.Discard(60+64)
 				return errors.New("nukv: cache miss")
 			}
 
 			it := new(Item)
 
 			if size[0] == 0 {
-				r.Discard(4)
+				r.Discard(60)
 			} else {
-				r.Discard(4+8)
+				r.Discard(60+64)
 			}
 
 			if size[0] != 0 {
 
 
-				it.Value = make([]byte, int(size[0])*8)
-				it.Value, err = r.Peek(int(size[0])*8)
-				r.Discard(int(size[0])*8)
+				it.Value = make([]byte, int(size[0])*64)
+				it.Value, err = r.Peek(int(size[0])*64)
+				r.Discard(int(size[0])*64)
 
 
 			} else {
@@ -1167,7 +1176,7 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 				return err
 			}
 
-			r.Discard(4+8)
+			r.Discard(60+64)
 
 			if success[0] == 0 && size[0] == 0  {
 				return errors.New("nukv: cache miss")
@@ -1176,9 +1185,9 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 
 			it := new(Item)
 
-			it.Value = make([]byte, int(size[0])*8)
-			it.Value, err = r.Peek(int(size[0])*8)
-			r.Discard(int(size[0])*8)
+			it.Value = make([]byte, int(size[0])*64)
+			it.Value, err = r.Peek(int(size[0])*64)
+			r.Discard(int(size[0])*64)
 			if err != nil {
 				return err
 			}
@@ -1364,12 +1373,12 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
       //mheader := fmt.Sprintf("%s %s %d %d %d\r\n",
         //    verb, item.Key, item.Flags, item.Expiration, len(item.Value))
   	mheader := fmt.Sprintf("%s", item.Key)
-  	length := len(mheader) + len(item.Value) 
-  	if length % 8 != 0 {
-  		padLen = 8 - (length % 8)
+  	length := len(mheader)+56 + len(item.Value) 
+  	if length % 64 != 0 {
+  		padLen = 64 - (length % 64)
   	}
   	length += padLen
-  	length /= 8
+  	length /= 64
 
       //
 
@@ -1401,11 +1410,11 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
   	if err != nil {
   		return err
   	}
-    for i:=0; i<8; i++ {
-  	 if _, err = rw.Write(item.Value); err != nil {
-  		  return err
-  	 }
-    }
+    
+  	if _, err = rw.Write(item.Value); err != nil {
+  	  return err
+  	}
+    
   	//if _, err := rw.Write(crlf); err != nil {
   	//	return err
   	//}
@@ -1435,7 +1444,7 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
 
   		if success, _ := rw.Peek(1); success[0] != 1 {
         if opcode, _ := rw.Peek(2); opcode[1] != 0x1F {
-  			  if _, err := rw.Discard(14); err != nil {
+  			  if _, err := rw.Discard(62+64); err != nil {
   				  return err
   			  }
   			  return ErrNotStored
@@ -1443,7 +1452,7 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
   		}
 
 
-  		rw.Discard(14)
+  		rw.Discard(62+64)
 
   	} else {
   		//start := time.Now()
@@ -1455,7 +1464,7 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
 
   		if success, _ := rw.Peek(1); success[0] != 1 {
         if opcode, _ := rw.Peek(2); opcode[1] != 0x1F {
-          if _, err := rw.Discard(14); err != nil {
+          if _, err := rw.Discard(62+64); err != nil {
             return err
           }
           return ErrNotStored
@@ -1463,7 +1472,7 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
       }
 
       
-  		if _, err := rw.Discard(6); err == nil {
+  		if _, err := rw.Discard(62); err == nil {
         if timeData, err := rw.Peek(8); err == nil {
            fStartCycle := (int32)(timeData[0])+256*(int32)(timeData[1])+256*256*(int32)(timeData[2])+256*256*256*(int32)(timeData[3])
            fEndCycle := (int32)(timeData[4])+256*(int32)(timeData[5])+256*256*(int32)(timeData[6])+256*256*256*(int32)(timeData[7])
@@ -1471,7 +1480,7 @@ func (c *Client) populateOne(rw *bufio.ReadWriter, verb string, item *Item) erro
            usDiff := (float32)(cycleDiff)*6.4
            item.Expiration = (int32)(usDiff)
         }           
-        rw.Discard(8)
+        rw.Discard(64)
         return nil
       }
       return ErrNotStored
@@ -1497,12 +1506,12 @@ func (c *Client) populateMany(rw *bufio.ReadWriter, verb string, keys []string, 
       //mheader := fmt.Sprintf("%s %s %d %d %d\r\n",
         //    verb, item.Key, item.Flags, item.Expiration, len(item.Value))
     mheader := fmt.Sprintf("%s", keys[ind])
-    length := len(mheader) + len(values[ind]) 
-    if length % 8 != 0 {
-      padLen = 8 - (length % 8)
+    length := len(mheader)+56 + len(values[ind]) 
+    if length % 64 != 0 {
+      padLen = 64 - (length % 64)
     }
     length += padLen
-    length /= 8
+    length /= 64
 
       //
 
@@ -1532,11 +1541,10 @@ func (c *Client) populateMany(rw *bufio.ReadWriter, verb string, keys []string, 
       return err
     }
 
-    for i:=0; i<7; i++ {
-      if _, err = rw.Write(values[ind]); err != nil {
-        return err
-      }
+    if _, err = rw.Write(values[ind]); err != nil {
+      return err
     }
+    
     //if _, err := rw.Write(crlf); err != nil {
     //  return err
     //}
@@ -1564,14 +1572,14 @@ func (c *Client) populateMany(rw *bufio.ReadWriter, verb string, keys []string, 
       }
 
       if success, _ := rw.Peek(1); success[0] != 1 {
-        if _, err := rw.Discard(14); err != nil {
+        if _, err := rw.Discard(62+64); err != nil {
           return err
         }
         return ErrNotStored
       }
 
 
-      rw.Discard(14)
+      rw.Discard(62+64)
 
     } else {
       //start := time.Now()
@@ -1582,14 +1590,14 @@ func (c *Client) populateMany(rw *bufio.ReadWriter, verb string, keys []string, 
       //print("Set took ", elapsed/1000, "\n")
 
       if success, _ := rw.Peek(1); success[0] != 1 {
-        if _, err := rw.Discard(14); err != nil {
+        if _, err := rw.Discard(62+64); err != nil {
           return err
         }
         return ErrNotStored
       }
 
 
-      rw.Discard(14)
+      rw.Discard(62+64)
     }
   }
 
