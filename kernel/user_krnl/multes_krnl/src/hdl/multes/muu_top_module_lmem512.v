@@ -30,8 +30,7 @@ module muu_Top_Module_LMem512 #(
     parameter KEY_WIDTH = 64,
     parameter HASHTABLE_MEM_SIZE = 20,
     parameter VALUESTORE_MEM_SIZE = 24,
-    parameter FILTER_PRED_CNT = 0,
-    parameter FILTER_REGEX_PARA = 0,
+    parameter FILTER_ENABLED=1,
 	parameter IS_SIM = 0,
     parameter USER_BITS = 3,
     parameter ENABLE_CHECKPOINTS = 0 // to simplify porting to 512 bits!
@@ -151,8 +150,6 @@ parameter DOUBLEHASH_WIDTH = 64;
 parameter HASH_WIDTH = 32;
 
 parameter SUPPORT_SCANS = 0;
-
-parameter FILTER_ENABLED_NUM = FILTER_REGEX_PARA + FILTER_PRED_CNT;
 
 wire [31:0] rdcmd_data;
 wire        rdcmd_valid;
@@ -314,6 +311,7 @@ wire value_b_ready;
 wire[VALUE_WIDTH-1:0] value_read_data;
 wire value_read_valid;
 wire value_read_ready;
+wire value_read_last;
 
 
 wire[VALUE_WIDTH-1:0] repldata_data;
@@ -1739,10 +1737,10 @@ wire cond_ready;
 wire cond_drop;
 
 generate
-    if (FILTER_ENABLED_NUM==0) begin
+    if (FILTER_ENABLED==0) begin
         //no filters in the project, cuts out whole part
         assign cond_valid = predconf_b_valid;
-        assign cond_drop = 0;
+        assign cond_drop = (predconf_b_valid ==1 && predconf_b_data==0) ? 0 : 1;
         assign predconf_b_ready = cond_ready;
 
         assign value_read_ready_buf = value_read_ready;
@@ -1751,78 +1749,25 @@ generate
 
     end
     else begin
-        //need to wire in filters
+    
+        nukv_Value_Segmenter segmenter (
+        .clk(clk),
+        .rst(rst),
+        .value_data(value_read_data_buf),
+        .value_valid(value_read_valid_buf),
+        .value_ready(value_read_ready_buf),
 
-        nukv_Predicate_Eval_Pipeline_v2 
-                #(.SUPPORT_SCANS(SUPPORT_SCANS),
-                  .PIPE_DEPTH(FILTER_PRED_CNT),
-                  .META_WIDTH(EXT_META_WIDTH) 
-                ) pred_eval_pipe (
+        .output_data(value_read_data),
+        .output_last(value_read_last),
+        .output_valid(value_read_valid),
+        .output_ready(value_read_ready)
+    );
+    
+    assign cond_valid = predconf_b_valid;
+    assign cond_drop = (predconf_b_valid ==1 && predconf_b_data==0) ? 0 : 1;
+    assign predconf_b_ready = cond_ready;
 
-            .clk(clk),
-            .rst(rst),
-            
-            .pred_data(predconf_b_fulldata[NET_META_WIDTH+MEMORY_WIDTH : 1]),
-            .pred_valid(predconf_b_valid),
-            .pred_ready(predconf_b_ready),
-            .pred_scan((SUPPORT_SCANS==1) ? predconf_b_fulldata[0] : 0),
-
-            .value_data(value_read_data_buf),
-            .value_last(0), 
-            .value_drop(0),
-            .value_valid(value_read_valid_buf),
-            .value_ready(value_read_ready_buf),
-
-            .output_valid(value_frompipe_valid),
-            .output_ready(value_frompipe_ready),
-            .output_data(value_frompipe_data),
-            .output_last(value_frompipe_last),
-            .output_drop(value_frompipe_drop),
-
-            .scan_on_outside(scan_mode_on),
-
-            .cmd_valid(pe_cmd_valid),
-            .cmd_length(pe_cmd_data),
-            .cmd_meta(pe_cmd_meta),
-            .cmd_ready(pe_cmd_ready)
-
-                );
-
-
-        nukv_fifogen #(
-            .DATA_SIZE(MEMORY_WIDTH),
-            .ADDR_BITS(7)
-        ) fifo_value_from_pe (
-            .clk(clk),
-            .rst(rst),
-            
-            .s_axis_tdata(value_frompipe_data),
-            .s_axis_tvalid(value_frompipe_valid),
-            .s_axis_tready(value_frompipe_ready),
-            
-            .m_axis_tdata(value_frompred_b_data),
-            .m_axis_tvalid(value_frompred_b_valid),
-            .m_axis_tready(value_frompred_b_ready)
-        );
-
-        nukv_fifogen #(
-            .DATA_SIZE(1),
-            .ADDR_BITS(8)
-        ) fifo_decision_from_pe (
-            .clk(clk),
-            .rst(rst),
-            
-            .s_axis_tdata(value_frompipe_drop),
-            .s_axis_tvalid(value_frompipe_last & value_frompipe_valid & value_frompipe_ready),
-            .s_axis_tready(),    
-            .m_axis_tdata(cond_drop),
-            .m_axis_tvalid(cond_valid),
-            .m_axis_tready(cond_ready)
-        );
-
-        assign value_frompred_b_ready = value_read_ready;
-        assign value_read_valid = value_frompred_b_valid;
-        assign value_read_data = value_frompred_b_data;
+        
 
     end
 endgenerate
