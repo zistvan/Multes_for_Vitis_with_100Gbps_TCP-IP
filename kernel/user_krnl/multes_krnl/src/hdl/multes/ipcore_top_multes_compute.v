@@ -1,7 +1,7 @@
 `default_nettype none
 
 //(* DowngradeIPIdentifiedWarnings="yes" *)
-module ipcore_top_multes
+module ipcore_top_multes_compute
 #(
    parameter integer C_S_AXI_CONTROL_ADDR_WIDTH                = 12 ,
   parameter integer C_S_AXI_CONTROL_DATA_WIDTH                = 32 ,
@@ -566,7 +566,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .val_from_proc_TDATA(val_from_proc_tdata),
   .val_from_proc_TVALID(val_from_proc_tvalid),
   .val_from_proc_TLAST(val_from_proc_tlast),
-  .val_from_proc_TREADY(val_from_proc_TREADY_f),
+  .val_from_proc_TREADY(val_from_proc_tready),
 
   .par_from_proc_TDATA(val_from_proc_tdata),
   .par_from_proc_TVALID(val_from_proc_tvalid),
