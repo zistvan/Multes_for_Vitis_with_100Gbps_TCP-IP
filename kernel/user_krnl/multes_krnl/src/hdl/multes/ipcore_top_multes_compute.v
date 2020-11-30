@@ -568,10 +568,10 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .val_from_proc_TLAST(val_from_proc_tlast),
   .val_from_proc_TREADY(val_from_proc_tready),
 
-  .par_from_proc_TDATA(val_from_proc_tdata),
-  .par_from_proc_TVALID(val_from_proc_tvalid),
-  .par_from_proc_TLAST(val_from_proc_tlast),
-  .par_from_proc_TREADY(val_from_proc_tready),
+  .par_from_proc_TDATA(par_from_proc_tdata),
+  .par_from_proc_TVALID(par_from_proc_tvalid),
+  .par_from_proc_TLAST(par_from_proc_tlast),
+  .par_from_proc_TREADY(par_from_proc_tready),
   
   .fclk(fclk),
   
