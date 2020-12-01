@@ -23,7 +23,7 @@ USE IEEE.STD_LOGIC_TEXTIO.all;
 
 entity muu_session_Top512 is
 	generic(
-		BUFFER_COUNT  : integer := 16;
+		BUFFER_COUNT  : integer := 4;
 		USER_BITS     : integer := 4;
 		OPS_THRESHOLD : integer := 8
 	);
