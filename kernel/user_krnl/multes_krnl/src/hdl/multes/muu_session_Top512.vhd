@@ -23,8 +23,8 @@ USE IEEE.STD_LOGIC_TEXTIO.all;
 
 entity muu_session_Top512 is
 	generic(
-		BUFFER_COUNT  : integer := 4;
-		USER_BITS     : integer := 4;
+		BUFFER_COUNT  : integer := 2;
+		USER_BITS     : integer := 3;
 		OPS_THRESHOLD : integer := 8
 	);
 	port(
@@ -326,7 +326,7 @@ begin
 					waitLocation                            <= '0';
 					haveLocation                            <= '1';
 					
-					for X in 0 to BUFFER_COUNT - 1 loop
+					for X in 0 to BUFFER5~_COUNT - 1 loop
 					   if (bufferSelectMask(X) = '1' and locationPending(X)=0) then 
                         locationPending(X) <= packetLengthField;
                        end if;
@@ -547,15 +547,5 @@ begin
 	out_userid <= outUser;
 	out_last   <= outLast;
 
-	debug_Delay : process(clk)
-	begin
-		if (clk'event and clk = '1') then
-			debug_out(119 downto 0) <=  --outData(51 downto 0) & errorLength & "0" & paraIn0Second & paraIn0First & "0" & bufferInValid(BUFFER_COUNT-1) & paraIn0Ready & para0_valid &"1111"&para0_data(63 downto 0); 
-				bufferInProgFull & "1111" & errorLength & outFirst & selBufReady & selBufValid & "1111" & bufferOutValid & readSelectMask & "1111" & '0' & waitingFirst & waitLocation & haveLocation & "1111" & bufferInReady & locationMask & "1111" & '0' & outLast & outReady & outValid & '0' & packet_last &
-				packetReady & packet_valid & "00" & eventReady & event_valid;
-		--debug_out(127 downto 116) <= (others => '0');--outData(63-12 downto 0);
-		end if;
-
-	end process;
-
+	
 end beh;

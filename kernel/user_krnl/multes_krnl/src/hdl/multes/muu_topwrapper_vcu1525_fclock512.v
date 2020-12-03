@@ -362,7 +362,7 @@ module muu_TopWrapper_fclk512 #(
    //open up server port (2888)
    always @(posedge aclk) 
      begin
-	reset <= !aresetn;
+	reset <= ~aresetn;
 	
 	if (aresetn == 0) begin
            port_opened <= 1'b0;
@@ -418,7 +418,7 @@ module muu_TopWrapper_fclk512 #(
 
 
     
-    wire[127:0] debug_sess;
+    
    muu_session_Top512  #(
                         .USER_BITS(USER_BITS)
    ) muuSessionMngr (
@@ -447,9 +447,7 @@ module muu_TopWrapper_fclk512 #(
 					    .out_last(sesspackLast),
 					    .out_data(sesspackData),
 					    .out_meta(sesspackMeta),
-              .out_userid(sesspackUser),             
-      
-					    .debug_out(debug_sess)
+              .out_userid(sesspackUser)
 					    );
 
     assign splitPreValid = sesspackValid;

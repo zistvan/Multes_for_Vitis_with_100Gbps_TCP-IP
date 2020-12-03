@@ -224,8 +224,8 @@ module ipcore_top_multes
   wire ap_start, ap_done, ap_ready, ap_idle, interrupt;
 wire [63:0] axi00_ptr0;
 wire ap_start_pulse;
-reg ap_start_r = 1'b0;
-reg ap_idle_r = 1'b1;
+reg ap_start_r;
+reg ap_idle_r;
 
 wire       runExperiment;
 reg       finishExperiment;
@@ -695,12 +695,16 @@ assign runExperiment = ap_start_pulse;
 // ap_idle is asserted when done is asserted, it is de-asserted when ap_start_pulse
 // is asserted
 always @(posedge ap_clk) begin
+
+   finishExperiment <= 0;
+ 
   if (~ap_rst_n) begin
     ap_idle_r <= 1'b1;
   end
   else begin
-    ap_idle_r <= ap_done ? 1'b1 :
-      ap_start_pulse ? 1'b0 : ap_idle;
+    if (ap_start_pulse==1) begin
+      ap_idle_r <= 1'b0;
+    end
   end
 end
 
