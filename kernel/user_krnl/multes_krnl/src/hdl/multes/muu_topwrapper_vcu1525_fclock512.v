@@ -455,7 +455,7 @@ module muu_TopWrapper_fclk512 #(
     assign splitPreDataMerged[USER_BITS+64+511:0] = {sesspackUser, sesspackMeta, sesspackData};
     assign splitPreDataMerged[512+64+USER_BITS] = sesspackLast;
        
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512+64+1+USER_BITS),
             .ADDR_BITS(6)
         ) fifo_splitprepare (
@@ -672,7 +672,7 @@ module muu_TopWrapper_fclk512 #(
 // .S00_AXIS_TDATA({fromKvsData[63:0],fromKvsData[127:64]}),
   
    wire[512+64+USER_BITS:0] fromKvsMerged;
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512+64+1+USER_BITS),
             .ADDR_BITS(6)
         ) fifo_f_fromkvs (
@@ -690,7 +690,7 @@ module muu_TopWrapper_fclk512 #(
    assign fromKvsLast = fromKvsMerged[0];
    assign fromKvsUser = fromKvsMerged[USER_BITS:1];
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramrddata (
@@ -705,7 +705,7 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_dramRdData_data_f)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd (
@@ -720,7 +720,7 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_cmd_dramRdData_data)
                 );         
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata (
@@ -735,7 +735,7 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_dramWrData_data)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd (
@@ -751,7 +751,7 @@ module muu_TopWrapper_fclk512 #(
                 );   
 
 
-nukv_fifogen_async #(
+nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramrddata2 (
@@ -766,7 +766,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(upd_dramRdData_data_f)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd2 (
@@ -781,7 +781,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(upd_cmd_dramRdData_data)
                 );         
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata2 (
@@ -796,7 +796,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(upd_dramWrData_data)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd2 (
@@ -813,7 +813,7 @@ nukv_fifogen_async #(
 
     
 
-nukv_fifogen_async #(
+nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramrddata3 (
@@ -828,7 +828,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(ptr_rd_data_f)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd3 (
@@ -843,7 +843,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(ptr_rdcmd_data)
                 );         
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata3 (
@@ -858,7 +858,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(ptr_wr_data)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd3 (
@@ -875,7 +875,7 @@ nukv_fifogen_async #(
 
     
 
-nukv_fifogen_async #(
+nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramrddata4 (
@@ -890,7 +890,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(bmap_rd_data_f)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd4 (
@@ -905,7 +905,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(bmap_rdcmd_data)
                 );         
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata4 (
@@ -920,7 +920,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(bmap_wr_data)
                 ); 
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd4 (
@@ -935,7 +935,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(bmap_wrcmd_data)
                 );           
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(48),
             .ADDR_BITS(6)
         ) fifo_f_openreq (
@@ -950,7 +950,7 @@ nukv_fifogen_async #(
                 .m_axis_tdata(m_axis_open_connection_TDATA)
                 );  
 
-   nukv_fifogen_async #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(24),
             .ADDR_BITS(6)
         ) fifo_f_openstat (

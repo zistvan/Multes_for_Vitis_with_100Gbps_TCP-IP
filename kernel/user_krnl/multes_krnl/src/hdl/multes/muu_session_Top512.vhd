@@ -326,7 +326,7 @@ begin
 					waitLocation                            <= '0';
 					haveLocation                            <= '1';
 					
-					for X in 0 to BUFFER5~_COUNT - 1 loop
+					for X in 0 to BUFFER_COUNT - 1 loop
 					   if (bufferSelectMask(X) = '1' and locationPending(X)=0) then 
                         locationPending(X) <= packetLengthField;
                        end if;
