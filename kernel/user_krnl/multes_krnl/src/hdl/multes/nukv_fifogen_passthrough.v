@@ -41,3 +41,5 @@ assign m_axis_tdata = s_axis_tdata;
 assign m_axis_tvalid = s_axis_tvalid;
 assign s_axis_tready = m_axis_tready;
 assign s_axis_talmostfull = 0;
+
+endmodule

@@ -225,10 +225,10 @@ module ipcore_top_multes
 wire [63:0] axi00_ptr0;
 wire ap_start_pulse;
 reg ap_start_r;
-reg ap_idle_r;
 
 wire       runExperiment;
 reg       finishExperiment;
+reg       finishPulse;
 
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -248,13 +248,13 @@ assign interrupt = 1'b0;
 ///////////////////////////////////////////////////////////////////////////////
 
   assign uclk = ap_clk;
-  assign urst = ~areset;
+  assign urst = areset;
 
   wire fclk;
   wire frst;
 
   assign fclk = ap_clk;
-  assign frst = ~areset;
+  assign frst = areset;
 
 
   /* CUT OFF UDP */
@@ -526,7 +526,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .fclk(fclk),
   
   .aclk(uclk),                                                          // input wire aclk
-  .aresetn(ap_start_r)                                                    // input wire aresetn
+  .aresetn(~urst)                                                    // input wire aresetn
 );
 
 
@@ -535,11 +535,11 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
  */
 muu_memory_datamovers  mem_inf_inst
 (
-.sys_rst(urst),
+.sys_rst(~urst),
 .sys_clk(uclk),
 
 .user_clk(uclk),
-.user_rst_n(ap_start_r),
+.user_rst_n(~urst),
 
   // HashTable DRAM Connection
 
@@ -690,38 +690,57 @@ always @(posedge ap_clk) begin
 end
 
 assign ap_start_pulse = ap_start & ~ap_start_r;
-assign runExperiment = ap_start_pulse;
 
-// ap_idle is asserted when done is asserted, it is de-asserted when ap_start_pulse
-// is asserted
-always @(posedge ap_clk) begin
-
-   finishExperiment <= 0;
- 
-  if (~ap_rst_n) begin
-    ap_idle_r <= 1'b1;
-  end
-  else begin
-    if (ap_start_pulse==1) begin
-      ap_idle_r <= 1'b0;
-    end
-  end
-end
-
-assign ap_idle = ap_idle_r;
-
-// Done logic
-
-assign ap_done = finishExperiment;
-
-// Ready Logic (non-pipelined case)
-assign ap_ready = ap_done;
-
+reg[63:0] countDown;
 
 wire [31:0] useConn, useIpAddr, pkgWordCount, basePort ,baseIpAddress;
 
 wire[31:0] timeInSeconds, dualMode, packetGap;
 wire[63:0] timeInCycles;
+
+// ap_idle is asserted when done is asserted, it is de-asserted when ap_start_pulse
+// is asserted
+always @(posedge ap_clk) begin
+   
+  if (~ap_rst_n) begin
+    finishExperiment <= 1;
+    countDown <= 0;
+  end
+  else begin
+
+    if (ap_start_pulse==1) begin
+      countDown <= timeInCycles;
+      finishExperiment <= 0;
+    end else begin      
+  
+      if (countDown==0) begin
+        countDown <= 0;
+        finishExperiment <= 1;
+
+        if (finishExperiment==0) begin
+          finishPulse <= 1;
+        end else begin
+          finishPulse <= 0;
+        end
+  
+      end else begin
+        countDown <= countDown-1;
+      end
+    end
+  end
+end
+
+assign ap_idle = finishExperiment;
+
+// Done logic
+
+assign ap_done = finishPulse;
+
+// Ready Logic (non-pipelined case)
+assign ap_ready = ap_done;
+
+
+
 
 user_krnl_control_s_axi #(
   .C_S_AXI_ADDR_WIDTH ( C_S_AXI_CONTROL_ADDR_WIDTH ),
