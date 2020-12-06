@@ -585,7 +585,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
  */
 muu_memory_datamovers  mem_inf_inst
 (
-.sys_rst(urst),
+.sys_rst_n(urst),
 .sys_clk(uclk),
 
 .user_clk(uclk),

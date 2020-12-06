@@ -42,7 +42,7 @@
 
 module muu_memory_datamovers
 (
-	input wire sys_rst,
+	input wire sys_rst_n,
 	input wire sys_clk,
 
 	input wire user_clk,
