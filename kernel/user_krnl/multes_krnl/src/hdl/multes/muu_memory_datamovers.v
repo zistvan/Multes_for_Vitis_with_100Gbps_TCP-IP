@@ -1332,7 +1332,7 @@ axis_data_fifo_kvs_to_dm_512 ptr_rxwrite (
 
 
 axis_data_fifo_kvs_to_dm_512 bmap_rxread (
-  .s_axis_aresetn(sys_rst),  // input wire s_axis_aresetn
+  .s_axis_aresetn(sys_rst_n),  // input wire s_axis_aresetn
   //.m_axis_aresetn(user_rst_n),  // input wire m_axis_aresetn
   .s_axis_aclk(sys_clk),        // input wire s_axis_aclk
   .s_axis_tvalid(axis_s3_rxread_cc2dm_tvalid),    // input wire s_axis_tvalid
@@ -1358,7 +1358,7 @@ axis_data_fifo_kvs_to_dm_512 bmap_rxread (
 
 
 axis_data_fifo_kvs_to_dm_512 ptr_rxread (
-  .s_axis_aresetn(sys_rst),  // input wire s_axis_aresetn
+  .s_axis_aresetn(sys_rst_n),  // input wire s_axis_aresetn
   //.m_axis_aresetn(user_rst_n),  // input wire m_axis_aresetn
   .s_axis_aclk(sys_clk),        // input wire s_axis_aclk
   .s_axis_tvalid(axis_s4_rxread_cc2dm_tvalid),    // input wire s_axis_tvalid
@@ -1399,7 +1399,7 @@ nukv_fifogen #(
 
 axi_read_kvs_datamover rxread_bmap_datamover (
   .m_axi_mm2s_aclk(sys_clk),                        // input wire m_axi_mm2s_aclk
-  .m_axi_mm2s_aresetn(sys_rst),                  // input wire m_axi_mm2s_aresetn
+  .m_axi_mm2s_aresetn(sys_rst_n),                  // input wire m_axi_mm2s_aresetn
   .mm2s_err(),                                      // output wire mm2s_err
   .m_axis_mm2s_cmdsts_aclk(user_clk),        // input wire m_axis_mm2s_cmdsts_aclk
   .m_axis_mm2s_cmdsts_aresetn(user_rst_n),  // input wire m_axis_mm2s_cmdsts_aresetn
@@ -1461,7 +1461,7 @@ nukv_fifogen #(
 
 axi_read_kvs_datamover rxread_ptr_datamover (
   .m_axi_mm2s_aclk(sys_clk),                        // input wire m_axi_mm2s_aclk
-  .m_axi_mm2s_aresetn(sys_rst),                  // input wire m_axi_mm2s_aresetn
+  .m_axi_mm2s_aresetn(sys_rst_n),                  // input wire m_axi_mm2s_aresetn
   .mm2s_err(),                                      // output wire mm2s_err
   .m_axis_mm2s_cmdsts_aclk(user_clk),        // input wire m_axis_mm2s_cmdsts_aclk
   .m_axis_mm2s_cmdsts_aresetn(user_rst_n),  // input wire m_axis_mm2s_cmdsts_aresetn
@@ -1519,7 +1519,7 @@ nukv_fifogen #(
 
 axi_write_kvs_datamover rxwrite_bmap_datamover (
   .m_axi_s2mm_aclk(sys_clk),                        // input wire m_axi_s2mm_aclk
-  .m_axi_s2mm_aresetn(sys_rst),                  // input wire m_axi_s2mm_aresetn
+  .m_axi_s2mm_aresetn(sys_rst_n),                  // input wire m_axi_s2mm_aresetn
   .s2mm_err(),                                      // output wire s2mm_err
   .m_axis_s2mm_cmdsts_awclk(user_clk),      // input wire m_axis_s2mm_cmdsts_awclk
   .m_axis_s2mm_cmdsts_aresetn(user_rst_n),  // input wire m_axis_s2mm_cmdsts_aresetn
@@ -1587,7 +1587,7 @@ nukv_fifogen #(
 
 axi_write_kvs_datamover rxwrite_ptr_datamover (
   .m_axi_s2mm_aclk(sys_clk),                        // input wire m_axi_s2mm_aclk
-  .m_axi_s2mm_aresetn(sys_rst),                  // input wire m_axi_s2mm_aresetn
+  .m_axi_s2mm_aresetn(sys_rst_n),                  // input wire m_axi_s2mm_aresetn
   .s2mm_err(),                                      // output wire s2mm_err
   .m_axis_s2mm_cmdsts_awclk(user_clk),      // input wire m_axis_s2mm_cmdsts_awclk
   .m_axis_s2mm_cmdsts_aresetn(user_rst_n),  // input wire m_axis_s2mm_cmdsts_aresetn
@@ -1630,7 +1630,7 @@ axi_write_kvs_datamover rxwrite_ptr_datamover (
 
 axi_kvs_mem_interconnect rx_multiplexer_34 (
   .INTERCONNECT_ACLK(sys_clk),        // input wire INTERCONNECT_ACLK
-  .INTERCONNECT_ARESETN(sys_rst),  // input wire INTERCONNECT_ARESETN
+  .INTERCONNECT_ARESETN(sys_rst_n),  // input wire INTERCONNECT_ARESETN
   .S00_AXI_ARESET_OUT_N(),  // output wire S00_AXI_ARESET_OUT_N
   .S00_AXI_ACLK(sys_clk),                  // input wire S00_AXI_ACLK
   .S00_AXI_AWID(c0_s3_s_axi_awid),                  // input wire [0 : 0] S00_AXI_AWID
