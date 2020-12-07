@@ -573,7 +573,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .par_from_proc_TLAST(par_from_proc_tlast),
   .par_from_proc_TREADY(par_from_proc_tready),
   
-  .fclk(fclk),
+  //.fclk(fclk),
   
   .aclk(uclk),                                                          // input wire aclk
   .aresetn(ap_start_r)                                                    // input wire aresetn

@@ -35,10 +35,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DATA_SIZE 62500000
 
-#define IP_ADDR 0x0A01D497
-#define BOARD_NUMBER 0
-#define ARP 0x0A01D497
-
 void wait_for_enter(const std::string &msg) {
     std::cout << msg << std::endl;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -46,7 +42,7 @@ void wait_for_enter(const std::string &msg) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " <XCLBIN File> [<IP address in format 10.1.212.121> <Base Port> <#Connection> <#Tx Pkg>]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <XCLBIN File> [<IP address in format 10.1.212.121> <TimeinSeconds> " << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -108,11 +104,42 @@ int main(int argc, char **argv) {
     
     wait_for_enter("\nPress ENTER to continue after setting up ILA trigger...");
 
+        uint32_t numPacketWord = 22;
+    uint32_t connection = 100;
+    uint32_t numIpAddr = 1;
+    uint32_t basePort = 2880; 
+    uint32_t packetGap = 0;
+    uint32_t dualModeEn = 0;
+    double durationUs = 0.0;
+    uint32_t timeInSeconds = 2;
+    uint32_t baseIpAddr = 0x0A01D479; //alveo1a
+
+    if (argc >= 3)
+    {
+        std::string s = argv[2];
+        std::string delimiter = ".";
+        int ip [4];
+        size_t pos = 0;
+        std::string token;
+        int i = 0;
+        while ((pos = s.find(delimiter)) != std::string::npos) {
+            token = s.substr(0, pos);
+            ip [i] = stoi(token);
+            s.erase(0, pos + delimiter.length());
+            i++;
+        }
+        ip[i] = stoi(s); 
+        baseIpAddr = ip[3] | (ip[2] << 8) | (ip[1] << 16) | (ip[0] << 24);
+    }
+
+    if(argc >=4)
+        timeInSeconds = strtol(argv[3], NULL, 10);
+
 
     // Set network kernel arguments
-    OCL_CHECK(err, err = network_kernel.setArg(0, IP_ADDR)); // Default IP address
-    OCL_CHECK(err, err = network_kernel.setArg(1, BOARD_NUMBER)); // Board number
-    OCL_CHECK(err, err = network_kernel.setArg(2, ARP)); // ARP lookup
+    OCL_CHECK(err, err = network_kernel.setArg(0, baseIpAddr)); // Default IP address
+    OCL_CHECK(err, err = network_kernel.setArg(1, 0)); // Board number
+    OCL_CHECK(err, err = network_kernel.setArg(2, baseIpAddr)); // ARP lookup
 
     OCL_CHECK(err,
               cl::Buffer buffer_r1(context,
@@ -135,46 +162,9 @@ int main(int argc, char **argv) {
     
         // Set iperf kernel arguments
 
-    uint32_t numPacketWord = 22;
-    uint32_t connection = 1;
-    uint32_t numIpAddr = 1;
-    uint32_t basePort = 5001; 
-    uint32_t packetGap = 0;
-    uint32_t dualModeEn = 0;
-    double durationUs = 0.0;
-    uint32_t timeInSeconds = 10;
-    //set destination IP address
-    uint32_t baseIpAddr = 0x0A01D479; //alveo1a
-    //uint32_t baseIpAddr = 0x0A01D499; //fpga server
-    //uint32_t baseIpAddr = 0x0A01D46E; //alveo0
-
-    if (argc >= 3)
-    {
-        std::string s = argv[2];
-        std::string delimiter = ".";
-        int ip [4];
-        size_t pos = 0;
-        std::string token;
-        int i = 0;
-        while ((pos = s.find(delimiter)) != std::string::npos) {
-            token = s.substr(0, pos);
-            ip [i] = stoi(token);
-            s.erase(0, pos + delimiter.length());
-            i++;
-        }
-        ip[i] = stoi(s); 
-        baseIpAddr = ip[3] | (ip[2] << 8) | (ip[1] << 16) | (ip[0] << 24);
-    }
-
-    if(argc >=4)
-        connection = strtol(argv[3], NULL, 10);
-
-    if(argc >= 5)
-        timeInSeconds = strtol(argv[4], NULL, 10);
-
     
     //Default Clocking frequency 250MHz
-    uint64_t timeInCycles =( (uint64_t) timeInSeconds * 250000000);
+    uint64_t timeInCycles =( (uint64_t) timeInSeconds * 150000000);
 
 
     printf("number of connection:%d\n",connection);
@@ -210,7 +200,7 @@ int main(int argc, char **argv) {
     OCL_CHECK(err, err = user_kernel.setArg(10, buffer_2));
 
     //Launch the Kernel
-    printf("enqueue scatter kernel...\n");
+    printf("enqueue multes kernel...\n");
     auto start = std::chrono::high_resolution_clock::now();
     OCL_CHECK(err, err = q.enqueueTask(user_kernel));
     

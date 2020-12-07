@@ -234,8 +234,8 @@ reg       finishPulse;
   ///////////////////////////////////////////////////////////////////////////////
 // Wires and Variables
 ///////////////////////////////////////////////////////////////////////////////
-(* DONT_TOUCH = "yes" *)
-reg areset = 1'b0;
+
+reg areset ;
 
 // Register and invert reset signal.
 always @(posedge ap_clk) begin
@@ -258,8 +258,8 @@ assign interrupt = 1'b0;
 
 
   /* CUT OFF UDP */
-  assign s_axis_udp_rx_tready = 0;
-  assign s_axis_udp_rx_meta_tready = 0;
+  assign s_axis_udp_rx_tready = 1;
+  assign s_axis_udp_rx_meta_tready = 1;
   assign m_axis_udp_tx_tvalid = 0;
   assign m_axis_udp_tx_meta_tvalid = 0;
 
@@ -523,7 +523,7 @@ muu_TopWrapper_fclk512 multiuser_kvs_top  (
   .bmap_wrcmd_valid(bmap_wrcmd_valid),
   .bmap_wrcmd_ready(bmap_wrcmd_ready), 
   
-  .fclk(fclk),
+  //.fclk(fclk),
   
   .aclk(uclk),                                                          // input wire aclk
   .aresetn(~urst)                                                    // input wire aresetn

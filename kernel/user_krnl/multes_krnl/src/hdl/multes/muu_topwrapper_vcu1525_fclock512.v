@@ -26,7 +26,7 @@ module muu_TopWrapper_fclk512 #(
 			  input wire 	    aclk,
 			  input wire 	    aresetn,
 
-        input wire       fclk, //faster clock, to drive the KVS
+        //input wire       fclk, //faster clock, to drive the KVS
 
 
 			  output wire 	    m_axis_open_connection_TVALID,
@@ -374,25 +374,22 @@ module muu_TopWrapper_fclk512 #(
 	end
 	else begin
            axis_listen_port_valid <= 1'b0;
+
+           if (myClock > 200000000) begin
            
-           if (axis_listen_port_valid==0 && m_axis_listen_port_TREADY==1 && min_port<max_port) begin
-              axis_listen_port_valid <= 1'b1;
-              axis_listen_port_data <= min_port;
-              min_port <= min_port+1; 
-              port_opened <= 1;
-           end
+             if (axis_listen_port_valid==0 && m_axis_listen_port_TREADY==1 && min_port<max_port) begin
+                axis_listen_port_valid <= 1'b1;
+                axis_listen_port_data <= min_port;
+                min_port <= min_port+1; 
+                port_opened <= 1;
+             end
+
+           end           
            
            
            myClock <= myClock+1;
 	end
      end
-
-  reg freset_0, freset;
-  always @(posedge fclk) begin
-    freset_0 <= reset;
-    freset <= freset_0;
-  end
-
 
       wire [511:0] s_axis_wide_data;
       assign s_axis_wide_data = s_axis_rx_data_TDATA;
@@ -461,7 +458,7 @@ module muu_TopWrapper_fclk512 #(
         ) fifo_splitprepare (
 						    .s_axis_clk(aclk),
 						    .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
 						    .s_axis_tvalid(splitPreValid),
 						    .s_axis_tready(splitPreReady),
 						    .s_axis_tdata(splitPreDataMerged),	
@@ -576,8 +573,8 @@ module muu_TopWrapper_fclk512 #(
             .HASHTABLE_MEM_SIZE(25), //the total size is this +USER_BITS!!!
             .VALUESTORE_MEM_SIZE(27)    
    ) muukvs_instance (
-        .clk(fclk),
-        .rst(freset),
+        .clk(aclk),
+        .rst(reset),
         .s_axis_tvalid(splitInValid),
         .s_axis_tready(splitInReady),
         .s_axis_tuserid(splitInUser),
@@ -676,8 +673,8 @@ module muu_TopWrapper_fclk512 #(
             .DATA_SIZE(512+64+1+USER_BITS),
             .ADDR_BITS(6)
         ) fifo_f_fromkvs (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(fromKvsValid_f),
                 .s_axis_tready(fromKvsReady_f),
@@ -696,7 +693,7 @@ module muu_TopWrapper_fclk512 #(
         ) fifo_f_dramrddata (
                 .s_axis_clk(aclk),
                 .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
                 .s_axis_tvalid(~ht_dramRdData_empty),
                 .s_axis_tready(ht_dramRdData_read),
                 .s_axis_tdata(ht_dramRdData_data),  
@@ -709,8 +706,8 @@ module muu_TopWrapper_fclk512 #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ht_cmd_dramRdData_valid_f),
                 .s_axis_tready(ht_cmd_dramRdData_ready_f),
@@ -724,8 +721,8 @@ module muu_TopWrapper_fclk512 #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ht_dramWrData_valid_f),
                 .s_axis_tready(ht_dramWrData_ready_f),
@@ -739,8 +736,8 @@ module muu_TopWrapper_fclk512 #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ht_cmd_dramWrData_valid_f),
                 .s_axis_tready(ht_cmd_dramWrData_ready_f),
@@ -757,7 +754,7 @@ nukv_fifogen_passthrough #(
         ) fifo_f_dramrddata2 (
                 .s_axis_clk(aclk),
                 .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
                 .s_axis_tvalid(~upd_dramRdData_empty),
                 .s_axis_tready(upd_dramRdData_read),
                 .s_axis_tdata(upd_dramRdData_data),  
@@ -770,8 +767,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd2 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(upd_cmd_dramRdData_valid_f),
                 .s_axis_tready(upd_cmd_dramRdData_ready_f),
@@ -785,8 +782,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata2 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(upd_dramWrData_valid_f),
                 .s_axis_tready(upd_dramWrData_ready_f),
@@ -800,8 +797,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd2 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(upd_cmd_dramWrData_valid_f),
                 .s_axis_tready(upd_cmd_dramWrData_ready_f),
@@ -819,7 +816,7 @@ nukv_fifogen_passthrough #(
         ) fifo_f_dramrddata3 (
                 .s_axis_clk(aclk),
                 .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
                 .s_axis_tvalid(ptr_rd_valid),
                 .s_axis_tready(ptr_rd_ready),
                 .s_axis_tdata(ptr_rd_data),  
@@ -832,8 +829,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd3 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ptr_rdcmd_valid_f),
                 .s_axis_tready(ptr_rdcmd_ready_f),
@@ -847,8 +844,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata3 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ptr_wr_valid_f),
                 .s_axis_tready(ptr_wr_ready_f),
@@ -862,8 +859,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd3 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(ptr_wrcmd_valid_f),
                 .s_axis_tready(ptr_wrcmd_ready_f),
@@ -881,7 +878,7 @@ nukv_fifogen_passthrough #(
         ) fifo_f_dramrddata4 (
                 .s_axis_clk(aclk),
                 .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
                 .s_axis_tvalid(bmap_rd_valid),
                 .s_axis_tready(bmap_rd_ready),
                 .s_axis_tdata(bmap_rd_data),  
@@ -894,8 +891,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd4 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(bmap_rdcmd_valid_f),
                 .s_axis_tready(bmap_rdcmd_ready_f),
@@ -909,8 +906,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata4 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(bmap_wr_valid_f),
                 .s_axis_tready(bmap_wr_ready_f),
@@ -924,8 +921,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramwrcmd4 (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(bmap_wrcmd_valid_f),
                 .s_axis_tready(bmap_wrcmd_ready_f),
@@ -939,8 +936,8 @@ nukv_fifogen_passthrough #(
             .DATA_SIZE(48),
             .ADDR_BITS(6)
         ) fifo_f_openreq (
-                .s_axis_clk(fclk),
-                .s_axis_rst(freset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .m_axis_clk(aclk),
                 .s_axis_tvalid(m_axis_open_connection_TVALID_f),
                 .s_axis_tready(m_axis_open_connection_TREADY_f),
@@ -956,7 +953,7 @@ nukv_fifogen_passthrough #(
         ) fifo_f_openstat (
                 .s_axis_clk(aclk),
                 .s_axis_rst(reset),
-                .m_axis_clk(fclk),
+                .m_axis_clk(aclk),
                 .s_axis_tvalid(s_axis_open_status_TVALID),
                 .s_axis_tready(s_axis_open_status_TREADY),
                 .s_axis_tdata(s_axis_open_status_TDATA),  
