@@ -222,7 +222,6 @@ module ipcore_top_multes
   wire urst;
 
   wire ap_start, ap_done, ap_ready, ap_idle, interrupt;
-wire [63:0] axi00_ptr0;
 wire ap_start_pulse;
 reg ap_start_r;
 
@@ -410,7 +409,10 @@ assign m_axis_tcp_tx_meta_tlast = 1;
 
 assign m_axis_tcp_tx_data_tkeep = 64'hffffffffffffffff;
 
-muu_TopWrapper_fclk512 multiuser_kvs_top  (
+muu_TopWrapper_fclk512 # (
+  .HASHTABLE_MEM_SIZE(21), 
+  .VALUESTORE_MEM_SIZE(21)
+  ) multiuser_kvs_top  (
 
   .m_axis_open_connection_TVALID(m_axis_tcp_open_connection_tvalid),
   .m_axis_open_connection_TDATA(m_axis_tcp_open_connection_tdata),

@@ -19,7 +19,9 @@
 
 module muu_TopWrapper_fclk512 #(
       parameter IS_SIM = 0,
-      parameter USER_BITS = 3
+      parameter USER_BITS = 3,
+      parameter HASHTABLE_MEM_SIZE = 21, //512bit lines x 2^SIZE
+      parameter VALUESTORE_MEM_SIZE = 21 //512bit lines x 2^SIZE
       )
       (
 
@@ -570,8 +572,8 @@ module muu_TopWrapper_fclk512 #(
    #(   
             .IS_SIM(IS_SIM),
             .USER_BITS(USER_BITS),
-            .HASHTABLE_MEM_SIZE(25), //the total size is this +USER_BITS!!!
-            .VALUESTORE_MEM_SIZE(27)    
+            .HASHTABLE_MEM_SIZE(HASHTABLE_MEM_SIZE-USER_BITS), //the total size is this +USER_BITS!!!
+            .VALUESTORE_MEM_SIZE(VALUESTORE_MEM_SIZE)    
    ) muukvs_instance (
         .clk(aclk),
         .rst(reset),
