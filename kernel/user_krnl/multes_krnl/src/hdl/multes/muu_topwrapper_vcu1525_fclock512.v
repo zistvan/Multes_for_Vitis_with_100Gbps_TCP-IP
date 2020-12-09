@@ -20,8 +20,8 @@
 module muu_TopWrapper_fclk512 #(
       parameter IS_SIM = 0,
       parameter USER_BITS = 3,
-      parameter HASHTABLE_MEM_SIZE = 21, //512bit lines x 2^SIZE
-      parameter VALUESTORE_MEM_SIZE = 21 //512bit lines x 2^SIZE
+      parameter HASHTABLE_MEM_SIZE = 16, //512bit lines x 2^SIZE
+      parameter VALUESTORE_MEM_SIZE = 16 //512bit lines x 2^SIZE
       )
       (
 
@@ -1056,13 +1056,13 @@ nukv_fifogen_passthrough #(
 	   end
 
      if (derOutValid==1 && derOutReady==1 ) begin
-      derMetaLen <= derMetaLen+8;
+      derMetaLen <= derMetaLen+64;
      end
 	
 	   if (derOutValid==1 && derOutReady==1 && is_first_output_cycle==1) begin	      
 	      derMetaData <= derOutData[512 +: 16];
 	      is_first_output_cycle <= 0;	  
-          derMetaLen <= 8;
+          derMetaLen <= 64;
 	   end	  
 
 	   if (derOutReady==1 && derOutValid==1 && derOutLast==1) begin

@@ -347,11 +347,13 @@ assign interrupt = 1'b0;
 wire [33:0] c0_awaddr, c0_araddr, c1_araddr, c1_awaddr;
 wire [63:0] axi00_ptr0, axi01_ptr0;
 
-assign c0_s_axi_awaddr = axi00_ptr0 + c0_awaddr;
-assign c0_s_axi_araddr = axi00_ptr0 + c0_araddr;
+reg [63:0] axi00_ptr_r, axi01_ptr_r;
 
-assign c1_s_axi_awaddr = axi01_ptr0 + c1_awaddr;
-assign c1_s_axi_araddr = axi01_ptr0 + c1_araddr;
+assign c0_s_axi_awaddr = axi00_ptr_r + c0_awaddr;
+assign c0_s_axi_araddr = axi00_ptr_r + c0_araddr;
+
+assign c1_s_axi_awaddr = axi01_ptr_r + c1_awaddr;
+assign c1_s_axi_araddr = axi01_ptr_r + c1_araddr;
 
 //DRAM MEM interface
 
@@ -707,12 +709,17 @@ always @(posedge ap_clk) begin
   if (~ap_rst_n) begin
     finishExperiment <= 1;
     countDown <= 0;
+    axi00_ptr_r <= 0;
+    axi01_ptr_r <= 0;
   end
   else begin
 
     if (ap_start_pulse==1) begin
       countDown <= timeInCycles;
       finishExperiment <= 0;
+      axi00_ptr_r <= axi00_ptr0;
+      axi01_ptr_r <= axi01_ptr0;
+
     end else begin      
   
       if (countDown==0) begin

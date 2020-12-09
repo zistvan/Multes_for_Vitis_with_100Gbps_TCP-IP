@@ -33,7 +33,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DATA_SIZE 62500000
+#define DATA_SIZE 128*1024*1024
 
 void wait_for_enter(const std::string &msg) {
     std::cout << msg << std::endl;
