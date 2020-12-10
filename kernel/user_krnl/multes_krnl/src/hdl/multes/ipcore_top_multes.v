@@ -412,8 +412,8 @@ assign m_axis_tcp_tx_meta_tlast = 1;
 assign m_axis_tcp_tx_data_tkeep = 64'hffffffffffffffff;
 
 muu_TopWrapper_fclk512 # (
-  .HASHTABLE_MEM_SIZE(21), 
-  .VALUESTORE_MEM_SIZE(21)
+  .HASHTABLE_MEM_SIZE(16), 
+  .VALUESTORE_MEM_SIZE(16)
   ) multiuser_kvs_top  (
 
   .m_axis_open_connection_TVALID(m_axis_tcp_open_connection_tvalid),
@@ -537,8 +537,11 @@ muu_TopWrapper_fclk512 # (
 /*
  * TCP DDR Memory Interface
  */
-muu_memory_datamovers  mem_inf_inst
-(
+muu_memory_datamovers #(
+    .HASHTABLE_MEM_SIZE(16), 
+    .VALUESTORE_MEM_SIZE(16)
+  )mem_inf_inst(
+
 .sys_rst_n(~urst),
 .sys_clk(uclk),
 

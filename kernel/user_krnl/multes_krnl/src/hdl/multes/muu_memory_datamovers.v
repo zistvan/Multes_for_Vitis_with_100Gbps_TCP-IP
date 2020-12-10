@@ -41,7 +41,11 @@
 
 
 module muu_memory_datamovers
-(
+	#(
+	  parameter HASHTABLE_MEM_SIZE = 16, //512bit lines x 2^SIZE
+      parameter VALUESTORE_MEM_SIZE = 16 //512bit lines x 2^SIZE
+	)
+	(
 	input wire sys_rst_n,
 	input wire sys_clk,
 
@@ -278,7 +282,8 @@ assign ht_m_axis_read_sts_tready = 1;
 assign ht_s_axis_read_cmd_tvalid = ht_cmd_dramRdData_valid;
 assign ht_cmd_dramRdData_stall = ~ht_s_axis_read_cmd_tready;
 // HT is in lower 8GB 
-assign ht_s_axis_read_cmd_tdata = {7'b0000000,ht_cmd_dramRdData_data[26:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,ht_cmd_dramRdData_data[39:32],6'b000000};
+
+assign ht_s_axis_read_cmd_tdata = {{(34-HASHTABLE_MEM_SIZE){1'b0}},ht_cmd_dramRdData_data[HASHTABLE_MEM_SIZE-1:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,ht_cmd_dramRdData_data[39:32],6'b000000};
 
 assign ht_dramRdData_data = ht_m_axis_read_tdata;
 assign ht_dramRdData_empty = ht_m_axis_read_tempty;
@@ -287,7 +292,7 @@ assign ht_m_axis_read_tready = ht_dramRdData_read;
 assign ht_s_axis_write_cmd_tvalid = ht_cmd_dramWrData_valid;
 assign ht_cmd_dramWrData_stall = ~ht_s_axis_write_cmd_tready;
 // HT is in lower 8GB 
-assign ht_s_axis_write_cmd_tdata = {7'b0000000,ht_cmd_dramWrData_data[26:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,ht_cmd_dramWrData_data[39:32],6'b000000};
+assign ht_s_axis_write_cmd_tdata = {{(34-HASHTABLE_MEM_SIZE){1'b0}},ht_cmd_dramWrData_data[HASHTABLE_MEM_SIZE-1:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,ht_cmd_dramWrData_data[39:32],6'b000000};
 
 assign ht_s_axis_write_tdata = ht_dramWrData_data;
 assign ht_s_axis_write_tkeep = 64'hFFFFFFFFFFFFFFFF;
@@ -301,8 +306,8 @@ assign upd_m_axis_read_sts_tready = 1;
 
 assign upd_s_axis_read_cmd_tvalid = upd_cmd_dramRdData_valid;
 assign upd_cmd_dramRdData_stall = ~upd_s_axis_read_cmd_tready;
-// UPD is in upper 8GB
-assign upd_s_axis_read_cmd_tdata = {7'b0000001,upd_cmd_dramRdData_data[26:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,upd_cmd_dramRdData_data[39:32],6'b000000};
+// UPD is in upper memory region
+assign upd_s_axis_read_cmd_tdata = {{(33-HASHTABLE_MEM_SIZE){1'b0}},1'b1,upd_cmd_dramRdData_data[VALUESTORE_MEM_SIZE-1:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,upd_cmd_dramRdData_data[39:32],6'b000000};
 
 assign upd_dramRdData_data = upd_m_axis_read_tdata;
 assign upd_dramRdData_empty = upd_m_axis_read_tempty;
@@ -310,22 +315,14 @@ assign upd_m_axis_read_tready = upd_dramRdData_read;
 
 assign upd_s_axis_write_cmd_tvalid = upd_cmd_dramWrData_valid;
 assign upd_cmd_dramWrData_stall = ~upd_s_axis_write_cmd_tready;
-// UPD is in upper 8GB
-assign upd_s_axis_write_cmd_tdata = {7'b0000001,upd_cmd_dramWrData_data[26:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,upd_cmd_dramWrData_data[39:32],6'b000000};
+// UPD is in upper memory region
+assign upd_s_axis_write_cmd_tdata = {{(33-HASHTABLE_MEM_SIZE){1'b0}},1'b1,upd_cmd_dramWrData_data[VALUESTORE_MEM_SIZE-1:0],6'b000000,8'h00,2'b00,7'b0000001,9'b000000000,upd_cmd_dramWrData_data[39:32],6'b000000};
 
 assign upd_s_axis_write_tdata = upd_dramWrData_data;
 assign upd_s_axis_write_tkeep = 64'hFFFFFFFFFFFFFFFF;
 assign upd_s_axis_write_tvalid = upd_dramWrData_valid;
 assign upd_s_axis_write_tlast = 0;
 assign upd_dramWrData_stall = ~upd_s_axis_write_tready;
-
-
-
-
-   
-
-
-
 
 
  // Slave Interface Write Address Ports
