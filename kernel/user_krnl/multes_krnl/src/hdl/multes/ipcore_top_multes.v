@@ -215,7 +215,83 @@ module ipcore_top_multes
         input wire [511:0]              c1_s_axi_rdata,
         input wire [1:0]                                 c1_s_axi_rresp,
         input wire                                       c1_s_axi_rlast,
-        input wire                                       c1_s_axi_rvalid
+        input wire                                       c1_s_axi_rvalid,
+
+                
+        // Slave Interface Write Address Ports
+        output wire  [3:0]                                 c2_s_axi_awid,
+        output wire  [33:0]                                c2_s_axi_awaddr,
+        output wire  [7:0]                                 c2_s_axi_awlen,
+        output wire  [2:0]                                 c2_s_axi_awsize,
+        output wire  [1:0]                                 c2_s_axi_awburst,
+
+        output wire                                        c2_s_axi_awvalid,
+        input wire                                        c2_s_axi_awready,
+        // Slave Interface Write Data Ports
+        output wire  [511:0]              c2_s_axi_wdata,
+        output wire  [63:0]               c2_s_axi_wstrb,
+        output wire                       c2_s_axi_wlast,
+        output wire                       c2_s_axi_wvalid,
+        input wire                       c2_s_axi_wready,
+        // Slave Interface Write Response Ports
+        output wire                       c2_s_axi_bready,
+        input wire [3:0]                      c2_s_axi_bid,
+        input wire [1:0]                 c2_s_axi_bresp,
+        input wire                       c2_s_axi_bvalid,
+        // Slave Interface Read Address Ports
+        output wire  [3:0]                c2_s_axi_arid,
+        output wire  [33:0]          c2_s_axi_araddr,
+        output wire  [7:0]                                 c2_s_axi_arlen,
+        output wire  [2:0]                                 c2_s_axi_arsize,
+        output wire  [1:0]                                 c2_s_axi_arburst,
+        output wire                                        c2_s_axi_arvalid,
+        input wire                                       c2_s_axi_arready,
+        // Slave Interface Read Data Ports
+        output wire                                        c2_s_axi_rready,
+        input wire [3:0]                c2_s_axi_rid,
+        input wire [511:0]              c2_s_axi_rdata,
+        input wire [1:0]                                 c2_s_axi_rresp,
+        input wire                                       c2_s_axi_rlast,
+        input wire                                       c2_s_axi_rvalid,
+
+
+        // Slave Interface Write Address Ports
+        output wire  [3:0]                                 c3_s_axi_awid,
+        output wire  [33:0]                                c3_s_axi_awaddr,
+        output wire  [7:0]                                 c3_s_axi_awlen,
+        output wire  [2:0]                                 c3_s_axi_awsize,
+        output wire  [1:0]                                 c3_s_axi_awburst,
+
+        output wire                                        c3_s_axi_awvalid,
+        input wire                                        c3_s_axi_awready,
+        // Slave Interface Write Data Ports
+        output wire  [511:0]              c3_s_axi_wdata,
+        output wire  [63:0]               c3_s_axi_wstrb,
+        output wire                       c3_s_axi_wlast,
+        output wire                       c3_s_axi_wvalid,
+        input wire                       c3_s_axi_wready,
+        // Slave Interface Write Response Ports
+        output wire                       c3_s_axi_bready,
+        input wire [3:0]                      c3_s_axi_bid,
+        input wire [1:0]                 c3_s_axi_bresp,
+        input wire                       c3_s_axi_bvalid,
+        // Slave Interface Read Address Ports
+        output wire  [3:0]                c3_s_axi_arid,
+        output wire  [33:0]          c3_s_axi_araddr,
+        output wire  [7:0]                                 c3_s_axi_arlen,
+        output wire  [2:0]                                 c3_s_axi_arsize,
+        output wire  [1:0]                                 c3_s_axi_arburst,
+        output wire                                        c3_s_axi_arvalid,
+        input wire                                       c3_s_axi_arready,
+        // Slave Interface Read Data Ports
+        output wire                                        c3_s_axi_rready,
+        input wire [3:0]                c3_s_axi_rid,
+        input wire [511:0]              c3_s_axi_rdata,
+        input wire [1:0]                                 c3_s_axi_rresp,
+        input wire                                       c3_s_axi_rlast,
+        input wire                                       c3_s_axi_rvalid
+
+
 
 );
   wire uclk;
@@ -267,9 +343,8 @@ assign interrupt = 1'b0;
 
 
    wire [511:0] ht_dramRdData_data;
-     wire          ht_dramRdData_empty;
-     wire          ht_dramRdData_almost_empty;
-    wire          ht_dramRdData_read;
+     wire          ht_dramRdData_valid;
+    wire          ht_dramRdData_ready;
 
 
     wire [63:0] ht_cmd_dramRdData_data;
@@ -289,9 +364,8 @@ assign interrupt = 1'b0;
 
      
    wire [511:0] upd_dramRdData_data;
-   wire          upd_dramRdData_empty;
-   wire          upd_dramRdData_almost_empty;
-  wire          upd_dramRdData_read;
+   wire          upd_dramRdData_valid;
+  wire          upd_dramRdData_ready;
 
  
   wire [63:0] upd_cmd_dramRdData_data;
@@ -348,12 +422,20 @@ wire [33:0] c0_awaddr, c0_araddr, c1_araddr, c1_awaddr;
 wire [63:0] axi00_ptr0, axi01_ptr0;
 
 reg [63:0] axi00_ptr_r, axi01_ptr_r;
+reg [63:0] axi02_ptr_r, axi03_ptr_r;
 
 assign c0_s_axi_awaddr = axi00_ptr_r + c0_awaddr;
 assign c0_s_axi_araddr = axi00_ptr_r + c0_araddr;
 
 assign c1_s_axi_awaddr = axi01_ptr_r + c1_awaddr;
 assign c1_s_axi_araddr = axi01_ptr_r + c1_araddr;
+
+assign c2_s_axi_awaddr = axi02_ptr_r + c2_awaddr;
+assign c2_s_axi_araddr = axi02_ptr_r + c2_araddr;
+
+assign c3_s_axi_awaddr = axi03_ptr_r + c3_awaddr;
+assign c3_s_axi_araddr = axi03_ptr_r + c3_araddr;
+
 
 //DRAM MEM interface
 
@@ -460,9 +542,8 @@ muu_TopWrapper_fclk512 # (
 
   
   .ht_dramRdData_data(ht_dramRdData_data),
-  .ht_dramRdData_empty(ht_dramRdData_empty),
-  .ht_dramRdData_almost_empty(ht_dramRdData_almost_empty),
-  .ht_dramRdData_read(ht_dramRdData_read),
+  .ht_dramRdData_valid(ht_dramRdData_valid),
+  .ht_dramRdData_ready(ht_dramRdData_ready),
   
   .ht_cmd_dramRdData_data(ht_cmd_dramRdData_data),
   .ht_cmd_dramRdData_valid(ht_cmd_dramRdData_valid),
@@ -478,9 +559,8 @@ muu_TopWrapper_fclk512 # (
   
   // Update DRAM Connection  
   .upd_dramRdData_data(upd_dramRdData_data),
-  .upd_dramRdData_empty(upd_dramRdData_empty),
-  .upd_dramRdData_almost_empty(upd_dramRdData_almost_empty),
-  .upd_dramRdData_read(upd_dramRdData_read),
+  .upd_dramRdData_valid(upd_dramRdData_valid),
+  .upd_dramRdData_ready(upd_dramRdData_ready),
   
   .upd_cmd_dramRdData_data(upd_cmd_dramRdData_data),
   .upd_cmd_dramRdData_valid(upd_cmd_dramRdData_valid),
@@ -551,9 +631,8 @@ muu_memory_datamovers #(
   // HashTable DRAM Connection
 
   .ht_dramRdData_data(ht_dramRdData_data),
-  .ht_dramRdData_empty(ht_dramRdData_empty),
-  .ht_dramRdData_almost_empty(ht_dramRdData_almost_empty),
-  .ht_dramRdData_read(ht_dramRdData_read),
+  .ht_dramRdData_valid(ht_dramRdData_valid),
+  .ht_dramRdData_ready(ht_dramRdData_ready),
   
   .ht_cmd_dramRdData_data(ht_cmd_dramRdData_data),
   .ht_cmd_dramRdData_valid(ht_cmd_dramRdData_valid),
@@ -568,9 +647,8 @@ muu_memory_datamovers #(
   .ht_cmd_dramWrData_stall(ht_cmd_dramWrData_stall),
   
   .upd_dramRdData_data(upd_dramRdData_data),
-  .upd_dramRdData_empty(upd_dramRdData_empty),
-  .upd_dramRdData_almost_empty(upd_dramRdData_almost_empty),
-  .upd_dramRdData_read(upd_dramRdData_read),
+  .upd_dramRdData_valid(upd_dramRdData_valid),
+  .upd_dramRdData_ready(upd_dramRdData_ready),
   
   .upd_cmd_dramRdData_data(upd_cmd_dramRdData_data),
   .upd_cmd_dramRdData_valid(upd_cmd_dramRdData_valid),
@@ -684,8 +762,76 @@ muu_memory_datamovers #(
   .c1_s_axi_rdata(c1_s_axi_rdata),
   .c1_s_axi_rresp(c1_s_axi_rresp),
   .c1_s_axi_rlast(c1_s_axi_rlast),
-  .c1_s_axi_rvalid(c1_s_axi_rvalid)
+  .c1_s_axi_rvalid(c1_s_axi_rvalid),
 
+
+  .c2_s_axi_awid(c2_s_axi_awid),
+  .c2_s_axi_awaddr(c2_awaddr),
+  .c2_s_axi_awlen(c2_s_axi_awlen),
+  .c2_s_axi_awsize(c2_s_axi_awsize),
+  .c2_s_axi_awburst(c2_s_axi_awburst),
+
+  .c2_s_axi_awvalid(c2_s_axi_awvalid),
+  .c2_s_axi_awready(c2_s_axi_awready),        
+  .c2_s_axi_wdata(c2_s_axi_wdata),
+  .c2_s_axi_wstrb(c2_s_axi_wstrb),
+  .c2_s_axi_wlast(c2_s_axi_wlast),
+  .c2_s_axi_wvalid(c2_s_axi_wvalid),
+  .c2_s_axi_wready(c2_s_axi_wready),
+  .c2_s_axi_bready(c2_s_axi_bready),
+  .c2_s_axi_bid(c2_s_axi_bid),
+  .c2_s_axi_bresp(c2_s_axi_bresp),
+  .c2_s_axi_bvalid(c2_s_axi_bvalid),
+  
+  .c2_s_axi_arid(c2_s_axi_arid),
+  .c2_s_axi_araddr(c2_araddr),
+  .c2_s_axi_arlen(c2_s_axi_arlen),
+  .c2_s_axi_arsize(c2_s_axi_arsize),
+  .c2_s_axi_arburst(c2_s_axi_arburst),
+  .c2_s_axi_arvalid(c2_s_axi_arvalid),
+  .c2_s_axi_arready(c2_s_axi_arready),
+  
+  .c2_s_axi_rready(c2_s_axi_rready),
+  .c2_s_axi_rid(c2_s_axi_rid),
+  .c2_s_axi_rdata(c2_s_axi_rdata),
+  .c2_s_axi_rresp(c2_s_axi_rresp),
+  .c2_s_axi_rlast(c2_s_axi_rlast),
+  .c2_s_axi_rvalid(c2_s_axi_rvalid),
+
+
+
+  .c3_s_axi_awid(c3_s_axi_awid),
+  .c3_s_axi_awaddr(c3_awaddr),
+  .c3_s_axi_awlen(c3_s_axi_awlen),
+  .c3_s_axi_awsize(c3_s_axi_awsize),
+  .c3_s_axi_awburst(c3_s_axi_awburst),
+
+  .c3_s_axi_awvalid(c3_s_axi_awvalid),
+  .c3_s_axi_awready(c3_s_axi_awready),        
+  .c3_s_axi_wdata(c3_s_axi_wdata),
+  .c3_s_axi_wstrb(c3_s_axi_wstrb),
+  .c3_s_axi_wlast(c3_s_axi_wlast),
+  .c3_s_axi_wvalid(c3_s_axi_wvalid),
+  .c3_s_axi_wready(c3_s_axi_wready),
+  .c3_s_axi_bready(c3_s_axi_bready),
+  .c3_s_axi_bid(c3_s_axi_bid),
+  .c3_s_axi_bresp(c3_s_axi_bresp),
+  .c3_s_axi_bvalid(c3_s_axi_bvalid),
+  
+  .c3_s_axi_arid(c3_s_axi_arid),
+  .c3_s_axi_araddr(c3_araddr),
+  .c3_s_axi_arlen(c3_s_axi_arlen),
+  .c3_s_axi_arsize(c3_s_axi_arsize),
+  .c3_s_axi_arburst(c3_s_axi_arburst),
+  .c3_s_axi_arvalid(c3_s_axi_arvalid),
+  .c3_s_axi_arready(c3_s_axi_arready),
+  
+  .c3_s_axi_rready(c3_s_axi_rready),
+  .c3_s_axi_rid(c3_s_axi_rid),
+  .c3_s_axi_rdata(c3_s_axi_rdata),
+  .c3_s_axi_rresp(c3_s_axi_rresp),
+  .c3_s_axi_rlast(c3_s_axi_rlast),
+  .c3_s_axi_rvalid(c3_s_axi_rvalid),
 
 );
 
@@ -714,6 +860,8 @@ always @(posedge ap_clk) begin
     countDown <= 0;
     axi00_ptr_r <= 0;
     axi01_ptr_r <= 0;
+     axi02_ptr_r <= 0;
+    axi03_ptr_r <= 0;
   end
   else begin
 
@@ -722,6 +870,8 @@ always @(posedge ap_clk) begin
       finishExperiment <= 0;
       axi00_ptr_r <= axi00_ptr0;
       axi01_ptr_r <= axi01_ptr0;
+      axi02_ptr_r <= axi02_ptr0;
+      axi03_ptr_r <= axi03_ptr0;
 
     end else begin      
   
@@ -794,7 +944,10 @@ inst_control_s_axi (
   .timeInSeconds          ( timeInSeconds     ),
   .timeInCycles           ( timeInCycles      ),//64 bit
   .axi00_ptr0             ( axi00_ptr0 ),
-  .axi01_ptr0             ( axi01_ptr0 )
+  .axi01_ptr0             ( axi01_ptr0 ),
+  .axi02_ptr0             ( axi02_ptr0 ),
+  .axi03_ptr0             ( axi03_ptr0 ),
+  
 );
 
 

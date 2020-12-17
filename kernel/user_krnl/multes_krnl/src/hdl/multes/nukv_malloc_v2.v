@@ -286,6 +286,9 @@ module nukv_Malloc #(
             error_state <= 0;
             additional_error <= 0;
 
+            p_rdcmd_data <= 0;
+            p_wrcmd_data <= 0;
+
     	end
     	else begin
 

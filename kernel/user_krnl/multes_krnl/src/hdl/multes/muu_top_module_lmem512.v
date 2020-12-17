@@ -58,9 +58,8 @@ module muu_Top_Module_LMem512 #(
 
 	// ht_rd:     Pull Input, 1536b
 	input  wire [511:0] ht_rd_data,
-	input  wire          ht_rd_empty,
-	input  wire          ht_rd_almost_empty,
-	output wire          ht_rd_read,
+	input  wire          ht_rd_valid,
+	output wire          ht_rd_ready,
 
 	// ht_rd_cmd: Push Output, 10b
 	output wire [63:0] ht_rd_cmd_data,
@@ -81,9 +80,8 @@ module muu_Top_Module_LMem512 #(
 
 	// upd_rd:     Pull Input, 1536b
 	input  wire [MEMORY_WIDTH-1:0] upd_rd_data,
-	input  wire          upd_rd_empty,
-	input  wire          upd_rd_almost_empty,
-	output wire          upd_rd_read,
+	input  wire          upd_rd_valid,
+	output wire          upd_rd_ready,
 
 	// upd_rd_cmd: Push Output, 10b
 	output wire [63:0] upd_rd_cmd_data,
@@ -1152,13 +1150,6 @@ wire[VALUE_WIDTH-1:0] ht_buf_rd_data;
 wire ht_buf_rd_ready;
 wire ht_buf_rd_valid;
 
-wire ht_rd_ready;
-wire ht_rd_almostfull;
-wire ht_rd_isvalid;
-
-assign ht_rd_read = ~ht_rd_almostfull & ~ht_rd_empty & ht_rd_ready;
-assign ht_rd_isvalid = ~ht_rd_empty & ht_rd_read;
-
 
 wire[VALUE_WIDTH-1:0] ht_read_data_int;
 wire ht_read_valid_int;
@@ -1172,9 +1163,9 @@ nukv_fifogen #(
     .rst(rst),
     
     .s_axis_tdata(ht_rd_data),
-    .s_axis_tvalid(ht_rd_isvalid),
+    .s_axis_tvalid(ht_rd_valid),
     .s_axis_tready(ht_rd_ready),
-    .s_axis_talmostfull(ht_rd_almostfull),
+    .s_axis_talmostfull(),
     
     .m_axis_tdata(ht_read_data_int),
     .m_axis_tvalid(ht_read_valid_int),
@@ -1645,17 +1636,13 @@ muu_DataRepeater data_replicator (
     .m_axis_tready(repldata_preb_ready)
 );
 
-wire upd_rd_ready;
-wire upd_rd_isvalid;
 
 wire[VALUE_WIDTH-1:0] value_read_data_int;
 wire value_read_valid_int;
 wire value_read_ready_int;
 wire value_read_almostfull_int2;
 
-assign upd_rd_read = ~upd_rd_empty & upd_rd_ready & ((value_read_ready_int & value_read_valid_int) | ~value_read_valid_int);
 
-assign upd_rd_isvalid = ~upd_rd_empty & upd_rd_read;
 
 always @(posedge clk) begin
 	if (rst) begin
@@ -1703,7 +1690,7 @@ nukv_fifogen #(
     .rst(rst),
     
     .s_axis_tdata(upd_rd_data),
-    .s_axis_tvalid(upd_rd_isvalid),
+    .s_axis_tvalid(upd_rd_valid),
     .s_axis_tready(upd_rd_ready),
     .s_axis_talmostfull(value_read_almostfull_int2),
     
