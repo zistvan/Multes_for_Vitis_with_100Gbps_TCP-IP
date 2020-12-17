@@ -217,7 +217,7 @@ module ipcore_top_multes
         input wire                                       c1_s_axi_rlast,
         input wire                                       c1_s_axi_rvalid,
 
-                
+
         // Slave Interface Write Address Ports
         output wire  [3:0]                                 c2_s_axi_awid,
         output wire  [33:0]                                c2_s_axi_awaddr,
@@ -419,7 +419,10 @@ assign interrupt = 1'b0;
 
 //convert 34 bit mem address to 64 bit mem address offset by axi pointer
 wire [33:0] c0_awaddr, c0_araddr, c1_araddr, c1_awaddr;
+wire [33:0] c2_awaddr, c2_araddr, c3_araddr, c3_awaddr;
+
 wire [63:0] axi00_ptr0, axi01_ptr0;
+wire [63:0] axi02_ptr0, axi03_ptr0;
 
 reg [63:0] axi00_ptr_r, axi01_ptr_r;
 reg [63:0] axi02_ptr_r, axi03_ptr_r;
@@ -831,7 +834,7 @@ muu_memory_datamovers #(
   .c3_s_axi_rdata(c3_s_axi_rdata),
   .c3_s_axi_rresp(c3_s_axi_rresp),
   .c3_s_axi_rlast(c3_s_axi_rlast),
-  .c3_s_axi_rvalid(c3_s_axi_rvalid),
+  .c3_s_axi_rvalid(c3_s_axi_rvalid)
 
 );
 
@@ -946,7 +949,7 @@ inst_control_s_axi (
   .axi00_ptr0             ( axi00_ptr0 ),
   .axi01_ptr0             ( axi01_ptr0 ),
   .axi02_ptr0             ( axi02_ptr0 ),
-  .axi03_ptr0             ( axi03_ptr0 ),
+  .axi03_ptr0             ( axi03_ptr0 )
   
 );
 
