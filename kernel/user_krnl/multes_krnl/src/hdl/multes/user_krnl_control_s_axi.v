@@ -115,6 +115,7 @@ localparam
     RDRESET                  = 2'd2,
     ADDR_BITS         = 7;
 
+
 //------------------------Local signal-------------------
     reg  [1:0]                    wstate = WRRESET;
     reg  [1:0]                    wnext;
@@ -292,6 +293,7 @@ assign axi00_ptr0   = int_axi00_ptr0;
 assign axi01_ptr0   = int_axi01_ptr0;
 assign axi02_ptr0   = int_axi02_ptr0;
 assign axi03_ptr0   = int_axi03_ptr0;
+
 // int_ap_start
 always @(posedge ACLK) begin
     if (ARESET)
@@ -445,6 +447,46 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_AXI01_PTR0_DATA_1)
             int_axi01_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi01_ptr0[63:32] & ~wmask);
+    end
+end
+
+// int_axi02_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi02_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI02_PTR0_DATA_0)
+            int_axi02_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi02_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi02_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi02_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI02_PTR0_DATA_1)
+            int_axi02_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi02_ptr0[63:32] & ~wmask);
+    end
+end
+
+// int_axi03_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi03_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI03_PTR0_DATA_0)
+            int_axi03_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi03_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi03_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi03_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI03_PTR0_DATA_1)
+            int_axi03_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi03_ptr0[63:32] & ~wmask);
     end
 end
 
