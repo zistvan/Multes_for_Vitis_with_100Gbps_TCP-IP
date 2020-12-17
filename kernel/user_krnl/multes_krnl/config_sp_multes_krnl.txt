@@ -1,11 +1,13 @@
 [connectivity] 
 slr=network_krnl_1:SLR0
 
-sp=network_krnl_1.m00_axi:HBM[30]
-sp=network_krnl_1.m01_axi:HBM[31]
+sp=network_krnl_1.m00_axi:HBM[28]
+sp=network_krnl_1.m01_axi:HBM[29]
 
 sp=multes_krnl_1.m00_axi:HBM[0]
-sp=multes_krnl_1.m01_axi:HBM[2]
+sp=multes_krnl_1.m01_axi:HBM[1]
+sp=multes_krnl_1.m02_axi:HBM[2]
+sp=multes_krnl_1.m03_axi:HBM[3]
 
 sc=network_krnl_1.m_axis_udp_rx:multes_krnl_1.s_axis_udp_rx
 sc=network_krnl_1.m_axis_udp_rx_meta:multes_krnl_1.s_axis_udp_rx_meta

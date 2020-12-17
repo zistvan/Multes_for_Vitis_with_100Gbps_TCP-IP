@@ -5,7 +5,7 @@
 `timescale 1ns/1ps
 module user_krnl_control_s_axi
 #(parameter
-    C_S_AXI_ADDR_WIDTH = 7,
+    C_S_AXI_ADDR_WIDTH = 8,
     C_S_AXI_DATA_WIDTH = 32
 )(
     input  wire                          ACLK,
@@ -43,7 +43,9 @@ module user_krnl_control_s_axi
     output wire [31:0]                   timeInSeconds,
     output wire [63:0]                   timeInCycles,
     output wire [63:0]                   axi00_ptr0,
-    output wire [63:0]                   axi01_ptr0
+    output wire [63:0]                   axi01_ptr0,
+    output wire [63:0]                   axi02_ptr0,
+    output wire [63:0]                   axi03_ptr0
 );
 //------------------------Address Info-------------------
 // 0x00 : Control signals
@@ -103,39 +105,55 @@ module user_krnl_control_s_axi
 // 0x6c : Data signal of axi01_ptr0
 //        bit 31~0 - axi01_ptr0[63:32] (Read/Write)
 // 0x70 : reserved
+// 0x74 : Data signal of axi02_ptr0
+//        bit 31~0 - axi02_ptr0[31:0] (Read/Write)
+// 0x78 : Data signal of axi02_ptr0
+//        bit 31~0 - axi02_ptr0[63:32] (Read/Write)
+// 0x7c : reserved
+// 0x80 : Data signal of axi03_ptr0
+//        bit 31~0 - axi03_ptr0[31:0] (Read/Write)
+// 0x84 : Data signal of axi03_ptr0
+//        bit 31~0 - axi03_ptr0[63:32] (Read/Write)
+// 0x88 : reserved
 // (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
 
 //------------------------Parameter----------------------
 localparam
-    ADDR_AP_CTRL              = 7'h00,
-    ADDR_GIE                  = 7'h04,
-    ADDR_IER                  = 7'h08,
-    ADDR_ISR                  = 7'h0c,
-    ADDR_USECONN_DATA_0       = 7'h10,
-    ADDR_USECONN_CTRL         = 7'h14,
-    ADDR_USEIPADDR_DATA_0     = 7'h18,
-    ADDR_USEIPADDR_CTRL       = 7'h1c,
-    ADDR_PKGWORDCOUNT_DATA_0  = 7'h20,
-    ADDR_PKGWORDCOUNT_CTRL    = 7'h24,
-    ADDR_BASEPORT_DATA_0      = 7'h28,
-    ADDR_BASEPORT_CTRL        = 7'h2c,
-    ADDR_BASEIPADDRESS_DATA_0 = 7'h30,
-    ADDR_BASEIPADDRESS_CTRL   = 7'h34,
-    ADDR_DUALMODEEN_DATA_0    = 7'h38,
-    ADDR_DUALMODEEN_CTRL      = 7'h3c,
-    ADDR_PACKETGAP_DATA_0     = 7'h40,
-    ADDR_PACKETGAP_CTRL       = 7'h44,
-    ADDR_TIMEINSECONDS_DATA_0 = 7'h48,
-    ADDR_TIMEINSECONDS_CTRL   = 7'h4c,
-    ADDR_TIMEINCYCLES_DATA_0  = 7'h50,
-    ADDR_TIMEINCYCLES_DATA_1  = 7'h54,
-    ADDR_TIMEINCYCLES_CTRL    = 7'h58,
-    ADDR_AXI00_PTR0_DATA_0    = 7'h5c,
-    ADDR_AXI00_PTR0_DATA_1    = 7'h60,
-    ADDR_AXI00_PTR0_CTRL      = 7'h64,
-    ADDR_AXI01_PTR0_DATA_0    = 7'h68,
-    ADDR_AXI01_PTR0_DATA_1    = 7'h6c,
-    ADDR_AXI01_PTR0_CTRL      = 7'h70,
+    ADDR_AP_CTRL              = 8'h00,
+    ADDR_GIE                  = 8'h04,
+    ADDR_IER                  = 8'h08,
+    ADDR_ISR                  = 8'h0c,
+    ADDR_USECONN_DATA_0       = 8'h10,
+    ADDR_USECONN_CTRL         = 8'h14,
+    ADDR_USEIPADDR_DATA_0     = 8'h18,
+    ADDR_USEIPADDR_CTRL       = 8'h1c,
+    ADDR_PKGWORDCOUNT_DATA_0  = 8'h20,
+    ADDR_PKGWORDCOUNT_CTRL    = 8'h24,
+    ADDR_BASEPORT_DATA_0      = 8'h28,
+    ADDR_BASEPORT_CTRL        = 8'h2c,
+    ADDR_BASEIPADDRESS_DATA_0 = 8'h30,
+    ADDR_BASEIPADDRESS_CTRL   = 8'h34,
+    ADDR_DUALMODEEN_DATA_0    = 8'h38,
+    ADDR_DUALMODEEN_CTRL      = 8'h3c,
+    ADDR_PACKETGAP_DATA_0     = 8'h40,
+    ADDR_PACKETGAP_CTRL       = 8'h44,
+    ADDR_TIMEINSECONDS_DATA_0 = 8'h48,
+    ADDR_TIMEINSECONDS_CTRL   = 8'h4c,
+    ADDR_TIMEINCYCLES_DATA_0  = 8'h50,
+    ADDR_TIMEINCYCLES_DATA_1  = 8'h54,
+    ADDR_TIMEINCYCLES_CTRL    = 8'h58,
+    ADDR_AXI00_PTR0_DATA_0    = 8'h5c,
+    ADDR_AXI00_PTR0_DATA_1    = 8'h60,
+    ADDR_AXI00_PTR0_CTRL      = 8'h64,
+    ADDR_AXI01_PTR0_DATA_0    = 8'h68,
+    ADDR_AXI01_PTR0_DATA_1    = 8'h6c,
+    ADDR_AXI01_PTR0_CTRL      = 8'h70,
+    ADDR_AXI02_PTR0_DATA_0    = 8'h74,
+    ADDR_AXI02_PTR0_DATA_1    = 8'h78,
+    ADDR_AXI02_PTR0_CTRL      = 8'h7c,
+    ADDR_AXI03_PTR0_DATA_0    = 8'h80,
+    ADDR_AXI03_PTR0_DATA_1    = 8'h84,
+    ADDR_AXI03_PTR0_CTRL      = 8'h88,
     WRIDLE                    = 2'd0,
     WRDATA                    = 2'd1,
     WRRESP                    = 2'd2,
@@ -143,7 +161,7 @@ localparam
     RDIDLE                    = 2'd0,
     RDDATA                    = 2'd1,
     RDRESET                   = 2'd2,
-    ADDR_BITS         = 7;
+    ADDR_BITS         = 8;
 
 //------------------------Local signal-------------------
     reg  [1:0]                    wstate = WRRESET;
@@ -177,6 +195,8 @@ localparam
     reg  [63:0]                   int_timeInCycles = 'b0;
     reg  [63:0]                   int_axi00_ptr0 = 'b0;
     reg  [63:0]                   int_axi01_ptr0 = 'b0;
+    reg  [63:0]                   int_axi02_ptr0 = 'b0;
+    reg  [63:0]                   int_axi03_ptr0 = 'b0;
 
 //------------------------Instantiation------------------
 
@@ -326,6 +346,18 @@ always @(posedge ACLK) begin
                 ADDR_AXI01_PTR0_DATA_1: begin
                     rdata <= int_axi01_ptr0[63:32];
                 end
+                ADDR_AXI02_PTR0_DATA_0: begin
+                    rdata <= int_axi02_ptr0[31:0];
+                end
+                ADDR_AXI02_PTR0_DATA_1: begin
+                    rdata <= int_axi02_ptr0[63:32];
+                end
+                ADDR_AXI03_PTR0_DATA_0: begin
+                    rdata <= int_axi03_ptr0[31:0];
+                end
+                ADDR_AXI03_PTR0_DATA_1: begin
+                    rdata <= int_axi03_ptr0[63:32];
+                end
             endcase
         end
     end
@@ -346,6 +378,8 @@ assign timeInSeconds = int_timeInSeconds;
 assign timeInCycles  = int_timeInCycles;
 assign axi00_ptr0    = int_axi00_ptr0;
 assign axi01_ptr0    = int_axi01_ptr0;
+assign axi02_ptr0    = int_axi02_ptr0;
+assign axi03_ptr0    = int_axi03_ptr0;
 // int_ap_start
 always @(posedge ACLK) begin
     if (ARESET)
@@ -579,6 +613,46 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_AXI01_PTR0_DATA_1)
             int_axi01_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi01_ptr0[63:32] & ~wmask);
+    end
+end
+
+// int_axi02_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi02_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI02_PTR0_DATA_0)
+            int_axi02_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi02_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi02_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi02_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI02_PTR0_DATA_1)
+            int_axi02_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi02_ptr0[63:32] & ~wmask);
+    end
+end
+
+// int_axi03_ptr0[31:0]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi03_ptr0[31:0] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI03_PTR0_DATA_0)
+            int_axi03_ptr0[31:0] <= (WDATA[31:0] & wmask) | (int_axi03_ptr0[31:0] & ~wmask);
+    end
+end
+
+// int_axi03_ptr0[63:32]
+always @(posedge ACLK) begin
+    if (ARESET)
+        int_axi03_ptr0[63:32] <= 0;
+    else if (ACLK_EN) begin
+        if (w_hs && waddr == ADDR_AXI03_PTR0_DATA_1)
+            int_axi03_ptr0[63:32] <= (WDATA[31:0] & wmask) | (int_axi03_ptr0[63:32] & ~wmask);
     end
 end
 
