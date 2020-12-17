@@ -63,6 +63,8 @@ int main(int argc, char **argv) {
     std::vector<int, aligned_allocator<int>> network_ptr1(size);
     std::vector<int, aligned_allocator<int>> user_ptr0(size);
     std::vector<int, aligned_allocator<int>> user_ptr1(size);
+    std::vector<int, aligned_allocator<int>> user_ptr2(size);
+    std::vector<int, aligned_allocator<int>> user_ptr3(size);
 
     //OPENCL HOST CODE AREA START
     //Create Program and Kernel
@@ -171,16 +173,8 @@ int main(int argc, char **argv) {
     printf("IP_ADDR:%x\n", baseIpAddr);
     printf("time in seconds: %d, time in cycles:%llu\n", timeInSeconds, timeInCycles);
 
-    //Set user Kernel Arguments
-    OCL_CHECK(err, err = user_kernel.setArg(0, connection));
-    OCL_CHECK(err, err = user_kernel.setArg(1, numIpAddr));
-    OCL_CHECK(err, err = user_kernel.setArg(2, numPacketWord));
-    OCL_CHECK(err, err = user_kernel.setArg(3, basePort));
-    OCL_CHECK(err, err = user_kernel.setArg(4, baseIpAddr));
-    OCL_CHECK(err, err = user_kernel.setArg(5, dualModeEn));
-    OCL_CHECK(err, err = user_kernel.setArg(6, packetGap));
-    OCL_CHECK(err, err = user_kernel.setArg(7, timeInSeconds));
-    OCL_CHECK(err, err = user_kernel.setArg(8, timeInCycles));
+    //Set user Kernel Arguments    
+    OCL_CHECK(err, err = user_kernel.setArg(0, timeInCycles));
     
     OCL_CHECK(err,
             cl::Buffer buffer_1(context,
@@ -195,9 +189,24 @@ int main(int argc, char **argv) {
                                 vector_size_bytes,
                                 user_ptr1.data(),
                                 &err));
+    OCL_CHECK(err,
+            cl::Buffer buffer_3(context,
+                                CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                vector_size_bytes,
+                                user_ptr2.data(),
+                                &err));
 
-    OCL_CHECK(err, err = user_kernel.setArg(9, buffer_1));
-    OCL_CHECK(err, err = user_kernel.setArg(10, buffer_2));
+    OCL_CHECK(err,
+            cl::Buffer buffer_4(context,
+                                CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                vector_size_bytes,
+                                user_ptr3.data(),
+                                &err));
+
+    OCL_CHECK(err, err = user_kernel.setArg(1, buffer_1));
+    OCL_CHECK(err, err = user_kernel.setArg(2, buffer_2));
+    OCL_CHECK(err, err = user_kernel.setArg(3, buffer_3));
+    OCL_CHECK(err, err = user_kernel.setArg(4, buffer_4));
 
     //Launch the Kernel
     printf("enqueue multes kernel...\n");

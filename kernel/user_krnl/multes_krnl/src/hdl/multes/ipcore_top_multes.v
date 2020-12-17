@@ -937,15 +937,7 @@ inst_control_s_axi (
   .ap_done                ( ap_done                ),
   .ap_ready               ( ap_ready               ),
   .ap_idle                ( ap_idle                ),
-  .useConn                ( useConn                ),
-  .useIpAddr              ( useIpAddr              ),
-  .pkgWordCount           ( pkgWordCount           ),
-  .basePort               ( basePort               ),
-  .baseIpAddress          ( baseIpAddress          ),
-  .dualModeEn             ( dualMode          ),   
-  .packetGap              ( packetGap              ),
-  .timeInSeconds          ( timeInSeconds     ),
-  .timeInCycles           ( timeInCycles      ),//64 bit
+  .runForCycles           ( timeInCycles      ),//64 bit
   .axi00_ptr0             ( axi00_ptr0 ),
   .axi01_ptr0             ( axi01_ptr0 ),
   .axi02_ptr0             ( axi02_ptr0 ),
