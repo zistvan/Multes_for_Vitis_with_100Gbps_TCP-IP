@@ -108,6 +108,8 @@ set_property value_resolve_type user $clkbifparam
 ipx::associate_bus_interfaces -busif s_axi_control -clock ap_clk [ipx::current_core]
 ipx::associate_bus_interfaces -busif m00_axi -clock ap_clk [ipx::current_core]
 ipx::associate_bus_interfaces -busif m01_axi -clock ap_clk [ipx::current_core]
+ipx::associate_bus_interfaces -busif m02_axi -clock ap_clk [ipx::current_core]
+ipx::associate_bus_interfaces -busif m03_axi -clock ap_clk [ipx::current_core]
 
 ipx::add_bus_interface s_axis_udp_rx [ipx::current_core]
 set_property interface_mode slave [ipx::get_bus_interfaces s_axis_udp_rx -of_objects [ipx::current_core]]

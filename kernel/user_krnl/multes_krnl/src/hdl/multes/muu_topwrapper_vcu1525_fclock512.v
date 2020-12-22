@@ -155,7 +155,9 @@ module muu_TopWrapper_fclk512 #(
 
               output wire  [63:0] bmap_wrcmd_data,
               output wire          bmap_wrcmd_valid,
-              input wire           bmap_wrcmd_ready         
+              input wire           bmap_wrcmd_ready, 
+
+              output wire [255:0] debug_kvs
 
         );
 
@@ -329,7 +331,8 @@ module muu_TopWrapper_fclk512 #(
 
    wire [35:0]            control0, control1;
    wire [255:0]           data;
-   reg [255:0]            debug_r;
+
+
    reg [255:0]            debug_r2;
    wire [63:0]            vio_cmd;
    reg [63:0]             vio_cmd_r;
@@ -452,13 +455,12 @@ module muu_TopWrapper_fclk512 #(
     assign splitPreDataMerged[USER_BITS+64+511:0] = {sesspackUser, sesspackMeta, sesspackData};
     assign splitPreDataMerged[512+64+USER_BITS] = sesspackLast;
        
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(512+64+1+USER_BITS),
             .ADDR_BITS(6)
         ) fifo_splitprepare (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(splitPreValid),
                 .s_axis_tready(splitPreReady),
                 .s_axis_tdata(splitPreDataMerged),  
@@ -661,19 +663,18 @@ module muu_TopWrapper_fclk512 #(
           .s_axis_open_status_TREADY(s_axis_open_status_TREADY_f),
           .s_axis_open_status_TDATA(s_axis_open_status_TDATA_f),
           
-          .debug(kvs_is_stuck)
+          .debug(debug_kvs)
    );
 
 // .S00_AXIS_TDATA({fromKvsData[63:0],fromKvsData[127:64]}),
   
    wire[512+64+USER_BITS:0] fromKvsMerged;
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(512+64+1+USER_BITS),
             .ADDR_BITS(6)
         ) fifo_f_fromkvs (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(fromKvsValid_f),
                 .s_axis_tready(fromKvsReady_f),
                 .s_axis_tdata({fromKvsData_f,fromKvsUser_f,fromKvsLast_f}),  
@@ -715,13 +716,12 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_cmd_dramRdData_data)
                 );         
 
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(ht_dramWrData_valid_f),
                 .s_axis_tready(ht_dramWrData_ready_f),
                 .s_axis_tdata(ht_dramWrData_data_f),  
@@ -776,13 +776,12 @@ nukv_fifogen_passthrough #(
                 .m_axis_tdata(upd_cmd_dramRdData_data)
                 );         
 
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramwrdata2 (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(upd_dramWrData_valid_f),
                 .s_axis_tready(upd_dramWrData_ready_f),
                 .s_axis_tdata(upd_dramWrData_data_f),  
@@ -808,13 +807,12 @@ nukv_fifogen_passthrough #(
 
     
 
-nukv_fifogen_async #(
+nukv_fifogen #(
             .DATA_SIZE(512),
             .ADDR_BITS(6)
         ) fifo_f_dramrddata3 (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),                
                 .s_axis_tvalid(ptr_rd_valid),
                 .s_axis_tready(ptr_rd_ready),
                 .s_axis_tdata(ptr_rd_data),  

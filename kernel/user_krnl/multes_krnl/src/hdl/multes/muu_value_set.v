@@ -34,7 +34,7 @@ module muu_Value_Set #(
 
 	input  wire [MEMORY_WIDTH-1:0] value_data,
 	input  wire         value_valid,
-	output reg         value_ready,
+	output wire         value_ready,
 
 	output reg [KEY_WIDTH+META_WIDTH+HEADER_WIDTH-1:0] output_data,
 	output reg         output_valid,
@@ -126,6 +126,10 @@ assign input_data_vallen = input_data[KEY_WIDTH+META_WIDTH+32 +: 16];
 assign input_data_valpoint = input_data[KEY_WIDTH+META_WIDTH +: 32];
 assign input_data_repcount = input_data[KEY_WIDTH+88 +: 8];
 
+reg valueReadyInt;
+
+assign value_ready = (state == ST_WRITE || state==ST_WRITE_AND_REPL) ? valueReadyInt & wr_ready : valueReadyInt;
+
 
 always @(posedge clk) begin
 	if (rst) begin
@@ -135,7 +139,7 @@ always @(posedge clk) begin
 		wr_valid <= 0;		
 
 		input_ready <= 0;
-		value_ready <= 0;
+		valueReadyInt <= 0;
 		rdcmd_valid <= 0;
 
 		pe_valid <= 0;
@@ -214,12 +218,12 @@ always @(posedge clk) begin
 							repl_conf_count <= input_data_repcount;
 							repl_conf_valid <= 1;
 
-							value_ready <= 0;		
+							valueReadyInt <= 0;		
 							towrite <= input_data_vallen;
 						end else 
 						begin
 							state <= ST_THROW_FIRST;
-							value_ready <= 1;		
+							valueReadyInt <= 1;		
 						end
 
 						input_ready <= 1;
@@ -249,7 +253,7 @@ always @(posedge clk) begin
 						/*if (input_data[KEY_WIDTH+HEADER_WIDTH+144 +: 4]==4'b0100) begin
 							state <= ST_THROW;
 							tothrow <= 8;
-							value_ready <= 1;	
+							valueReadyInt <= 1;	
 						end
 						*/
 
@@ -309,11 +313,11 @@ always @(posedge clk) begin
 					end
 
 					if (tothrow<=8 && tothrow!=0) begin
-						value_ready <= 0;
+						valueReadyInt <= 0;
 						state <= ST_OUTPUT;	
 					end else begin
 						if ((value_data[9:0]+7)/8<=8) begin
-							value_ready <= 0;
+							valueReadyInt <= 0;
 							state <= ST_OUTPUT;
 						end else begin
 							state <= ST_THROW;	
@@ -330,7 +334,7 @@ always @(posedge clk) begin
 					tothrow <= tothrow-8;
 
 					if (tothrow<=8) begin
-						value_ready <= 0;
+						valueReadyInt <= 0;
 						state <= ST_OUTPUT;	
 					end
 				end
@@ -338,7 +342,12 @@ always @(posedge clk) begin
 
 
 			ST_WRITE: begin
-				if (value_ready==1 && value_valid==1 && wrcmd_ready==1 && wr_ready==1) begin 
+
+				if (firstcommand==1 && wrcmd_ready==1 && wr_ready==1) begin
+					valueReadyInt <= 1;
+				end
+
+				if (value_ready==1 && value_valid==1) begin 
 
 					towrite <= towrite-8;
 					//writeaddr <= writeaddr+1;
@@ -351,16 +360,13 @@ always @(posedge clk) begin
 					wr_valid <= 1;
 					wr_data <= value_data;
 
-					value_ready <= 0;
+					
 
 					if (towrite<=8) begin						
 						state <= ST_OUTPUT;	
+						valueReadyInt <= 0;
 					end
-				end
-
-				if (value_ready==0 && value_valid==1 && wrcmd_ready==1 && wr_ready==1) begin
-					value_ready <= 1;
-				end
+				end			
 			end
 
 			ST_PREP_REPL : begin
@@ -378,7 +384,11 @@ always @(posedge clk) begin
 			end
 
 			ST_WRITE_AND_REPL: begin
-				if (value_ready==1 && value_valid==1 && wrcmd_ready==1 && wr_ready==1) begin 
+				if (value_ready==0 && firstcommand==1 && wrcmd_ready==1) begin
+			    	valueReadyInt <= 1;
+			    end 
+
+				if (value_ready==1 && value_valid==1) begin 
 
 					towrite <= towrite-8;
 					//writeaddr <= writeaddr+1;
@@ -394,21 +404,18 @@ always @(posedge clk) begin
 					wr_valid <= 1;
 					wr_data <= value_data;
 
-					value_ready <= 0;
+					
 
 					if (towrite<=8) begin						
 						state <= ST_OUTPUT;	
+						valueReadyInt <= 0;
 					end
-				end
-
-				if (value_ready==0 && value_valid==1 && wrcmd_ready==1 && wr_ready==1) begin
-					value_ready <= 1;
 				end
 			end			
 
 			ST_THROW_AND_REPL: begin
 				
-				if (value_ready==1 && value_valid==1 ) begin 
+				if (valueReadyInt==1 && value_valid==1 ) begin 
 
 					towrite <= towrite-8;
 					//writeaddr <= writeaddr+1;
@@ -418,15 +425,15 @@ always @(posedge clk) begin
 					repl_data_valid <= 1;
 					repl_data_data <= value_data;
 
-					value_ready <= 0;
+					valueReadyInt <= 0;
 
 					if (towrite<=8) begin						
 						state <= ST_OUTPUT;	
 					end
 				end
 
-				if (value_ready==0 && value_valid==1 ) begin
-					value_ready <= 1;
+				if (valueReadyInt==0 && value_valid==1 ) begin
+					valueReadyInt <= 1;
 				end
 			end
 
@@ -481,21 +488,21 @@ always @(posedge clk) begin
 			end
 
 			ST_PREDEVALCONF: begin
-				if (value_ready==1 && value_valid==1 && pe_ready==1) begin 
+				if (valueReadyInt==1 && value_valid==1 && pe_ready==1) begin 
 
 					
 					int_pe_data <= {value_data, pred_meta};
 					int_pe_scan <= need_scan;
 
-					value_ready <= 0;
+					valueReadyInt <= 0;
 
 					
 					state <= ST_RDCMDCONF;	
 					
 				end
 
-				if (value_ready==0 && value_valid==1 && pe_ready==1) begin
-					value_ready <= 1;
+				if (valueReadyInt==0 && value_valid==1 && pe_ready==1) begin
+					valueReadyInt <= 1;
 				end
 			end
 

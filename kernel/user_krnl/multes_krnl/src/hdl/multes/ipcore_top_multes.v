@@ -142,8 +142,6 @@ module ipcore_top_multes
   input  wire                                                   s_axi_control_bready              ,
   output wire [2-1:0]                                           s_axi_control_bresp               ,
 
-
-
         // Slave Interface Write Address Ports
         output wire  [3:0]                                 c0_s_axi_awid,
         output wire  [63:0]                                c0_s_axi_awaddr,
@@ -337,6 +335,9 @@ assign interrupt = 1'b0;
   assign s_axis_udp_rx_meta_tready = 1;
   assign m_axis_udp_tx_tvalid = 0;
   assign m_axis_udp_tx_meta_tvalid = 0;
+  assign m_axis_udp_tx_meta_tlast = 0;
+  assign m_axis_udp_tx_meta_tkeep = 32'hffffffff;
+
 
   /**/
 
@@ -609,6 +610,8 @@ muu_TopWrapper_fclk512 # (
   .bmap_wrcmd_data(bmap_wrcmd_data),
   .bmap_wrcmd_valid(bmap_wrcmd_valid),
   .bmap_wrcmd_ready(bmap_wrcmd_ready), 
+
+  .debug_kvs                 (m_axis_udp_tx_meta_tdata),
   
   //.fclk(fclk),
   

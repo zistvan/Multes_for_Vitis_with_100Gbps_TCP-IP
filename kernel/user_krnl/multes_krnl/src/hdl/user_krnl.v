@@ -297,14 +297,18 @@ module user_krnl #(
   output wire                                                   s_axi_control_bvalid              ,
   input  wire                                                   s_axi_control_bready              ,
   output wire [2-1:0]                                           s_axi_control_bresp               ,
-  output wire                                                   interrupt                         
+  output wire                                                   interrupt         
 );
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Wires and Variables
 
+
 assign interrupt = 1'b0;
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // User stack
 ///////////////////////////////////////////////////////////////////////////////

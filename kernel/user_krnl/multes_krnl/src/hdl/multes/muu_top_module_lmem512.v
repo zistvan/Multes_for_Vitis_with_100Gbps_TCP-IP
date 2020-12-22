@@ -161,7 +161,7 @@ module muu_Top_Module_LMem512 #(
 	input wire         par_from_proc_TLAST,
 	output wire         par_from_proc_TREADY,
 	
-	output wire [7:0]        debug
+	output wire [255:0]        debug
 );
 
 parameter EXT_META_WIDTH = NET_META_WIDTH+OPS_META_WIDTH+USER_BITS;//163
@@ -1891,7 +1891,7 @@ reg[191:0] data_aux;
 
 
    // -------------------------------------------------
-   /* 
+   
 
 
    wire [35:0] 				    control0, control1;
@@ -1968,13 +1968,12 @@ reg[191:0] data_aux;
       debug_r[45] <=    fromset_b_ready;
       debug_r[46] <=    value_read_valid;
       debug_r[47] <=    value_read_ready;
-      debug_r[48] <=    m_axis_tvalid    ;
-      debug_r[49] <=    m_axis_tready;
-      debug_r[50] <=    m_axis_tlast;
-
-      debug_r[51] <= scan_mode_on;
-      debug_r[52] <= scan_reading;
-      debug_r[53] <= scan_pause;
+      debug_r[48] <=	upd_wr_cmd_valid;
+      debug_r[49] <= 	upd_wr_cmd_stall;
+      debug_r[50] <=	upd_wr_valid;
+      debug_r[51] <= 	upd_wr_stall;
+      debug_r[52] <=    m_axis_tvalid;
+      debug_r[53] <=    m_axis_tready;
 
       debug_r[54] <= outputErrorHead | reqsplit_debug[0] | replicate_error_valid;
 
@@ -1992,10 +1991,13 @@ reg[191:0] data_aux;
 
       
       debug_r2 <= debug_r;
+
       
-      data <= debug_r2;
+      
    end
 
+   assign debug = debug_r2;
+/*
    
    icon icon_inst(
 		  .CONTROL0(control0),
