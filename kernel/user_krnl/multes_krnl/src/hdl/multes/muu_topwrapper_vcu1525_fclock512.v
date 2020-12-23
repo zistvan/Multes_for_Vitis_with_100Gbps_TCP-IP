@@ -686,13 +686,12 @@ module muu_TopWrapper_fclk512 #(
    assign fromKvsLast = fromKvsMerged[0];
    assign fromKvsUser = fromKvsMerged[USER_BITS:1];
 
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(512),
-            .ADDR_BITS(6)
+            .ADDR_BITS(9)
         ) fifo_f_dramrddata (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(ht_dramRdData_valid),
                 .s_axis_tready(ht_dramRdData_ready),
                 .s_axis_tdata(ht_dramRdData_data),  
@@ -701,13 +700,12 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_dramRdData_data_f)
                 ); 
 
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(ht_cmd_dramRdData_valid_f),
                 .s_axis_tready(ht_cmd_dramRdData_ready_f),
                 .s_axis_tdata(ht_cmd_dramRdData_data_f),  
@@ -746,13 +744,12 @@ module muu_TopWrapper_fclk512 #(
                 );   
 
 
-nukv_fifogen_passthrough #(
+nukv_fifogen #(
             .DATA_SIZE(512),
             .ADDR_BITS(10)
         ) fifo_f_dramrddata2 (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(upd_dramRdData_valid),
                 .s_axis_tready(upd_dramRdData_ready),
                 .s_axis_tdata(upd_dramRdData_data),  
@@ -761,13 +758,12 @@ nukv_fifogen_passthrough #(
                 .m_axis_tdata(upd_dramRdData_data_f)
                 ); 
 
-   nukv_fifogen_passthrough #(
+   nukv_fifogen #(
             .DATA_SIZE(64),
             .ADDR_BITS(6)
         ) fifo_f_dramrdcmd2 (
-                .s_axis_clk(aclk),
-                .s_axis_rst(reset),
-                .m_axis_clk(aclk),
+                .clk(aclk),
+                .rst(reset),
                 .s_axis_tvalid(upd_cmd_dramRdData_valid_f),
                 .s_axis_tready(upd_cmd_dramRdData_ready_f),
                 .s_axis_tdata(upd_cmd_dramRdData_data_f),  

@@ -422,7 +422,7 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
   			return err
   		}
 
-      for i:=0; i<7; i++ {
+      for i:=0; i<8+6; i++ {
         rw.Write(padding)
       }
 
@@ -479,7 +479,7 @@ func (c *Client) MultiGet(keys []string) (item *Item, err error) {
           return err
         }
 
-        for i:=0; i<7; i++ {
+        for i:=0; i<8+6; i++ {
           rw.Write(padding)
         }
 

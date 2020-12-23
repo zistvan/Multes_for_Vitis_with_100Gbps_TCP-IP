@@ -587,7 +587,7 @@ func main() {
 	timingPtr := flag.Bool("timing", false, "use timed mode")
 	fpgaTimePtr := flag.Bool("fpgatime", false, "use FPGA-reported times for replicated write")
 	matchPtr := flag.String("regexmatch", "", "expressions to match on, separated by comma. year|month|day|opening|closing|low|high|volume ==|>=|<=|!= value ,")
-	batchPtr := flag.Int("batchsize", 10, "batch size for GETs. ")
+	batchPtr := flag.Int("batchsizeget", 1, "batch size for GETs. ")
 	batchSetPtr := flag.Int("batchsizeset", 1, "batch size for SETs.")
 	flag.Parse()
 
@@ -619,6 +619,9 @@ func main() {
 
 	numKeysGen := *datasizePtr
 	numKeys := 0
+
+	bsizeGet := *batchPtr
+	bsizeSet := *batchSetPtr
 
 	keys := make([]string, 20*1024*1024)
 	values := make([][]byte, 20*1024*1024)
@@ -754,7 +757,7 @@ func main() {
 		startPercent := float64(i)*perclient
         stopPercent := float64(i+1)*perclient
 
-		go client(wg, start, mc, &config, statschan, mustPopulate, mustFlush, startPercent, stopPercent, numKeys, *batchPtr, *batchSetPtr, keys, values)
+		go client(wg, start, mc, &config, statschan, mustPopulate, mustFlush, startPercent, stopPercent, numKeys, bsizeGet, bsizeSet, keys, values)
 
 	}
 
