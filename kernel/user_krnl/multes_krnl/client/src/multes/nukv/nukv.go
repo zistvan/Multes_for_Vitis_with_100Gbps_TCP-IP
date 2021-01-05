@@ -1062,16 +1062,20 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 			
 
 			if success[0] == 0 && size[0] == 0  {
-        r.Discard(4)
+        r.Discard(4+8+56+56)
 				return errors.New("nukv: cache miss")
 			}
+
+      vsize := int(size[0])*64
+
       r.Discard(4+8+56+56)
 
 			it := new(Item)
 
-			it.Value = make([]byte, int(size[0])*64)
-			it.Value, err = r.Peek(int(size[0])*64)
-			_, err = r.Discard(int(size[0])*64)
+			it.Value = make([]byte, vsize)
+			it.Value, err = r.Peek(vsize)      
+
+			_, err = r.Discard(vsize)
 			if err != nil {
 				return err
 			}

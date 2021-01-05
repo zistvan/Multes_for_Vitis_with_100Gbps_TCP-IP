@@ -244,7 +244,7 @@ always @(posedge clk) begin
 						meta_data <= input_data[KEY_WIDTH +: META_WIDTH];
 						key_data <= input_data[KEY_WIDTH-1:0];
 						input_ready <= 1;
-						output_word[63:0] <= {22'h0, input_data[KEY_WIDTH+META_WIDTH+32 +: 10], input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
+						output_word[63:0] <= {22'h0, (input_data[KEY_WIDTH+META_WIDTH+32 +: 10]/8), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
 						output_word[511:64] <= 0;
 					end
 					else if (htopcode==HTOP_IGNORE && repopcode==OPCODE_PROPOSAL) begin
@@ -255,7 +255,7 @@ always @(posedge clk) begin
 						meta_data <= input_data[KEY_WIDTH +: META_WIDTH];
 						key_data <= input_data[KEY_WIDTH-1:0];
 						input_ready <= 1;
-						output_word[63:0] <= {22'h0, (lastInputForSet[current_userid][KEY_WIDTH+META_WIDTH+32 +: 10]+1), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
+						output_word[63:0] <= {22'h0, ((lastInputForSet[current_userid][KEY_WIDTH+META_WIDTH+32 +: 10]/8)+1), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
 						output_word[511:64] <= 0;
 					end
 					else if (htopcode==HTOP_IGNORE && repopcode==OPCODE_COMMIT) begin
@@ -266,7 +266,7 @@ always @(posedge clk) begin
 						meta_data <= input_data[KEY_WIDTH +: META_WIDTH];
 						key_data <= input_data[KEY_WIDTH-1:0];
 						input_ready <= 1;
-						output_word[63:0] <= {22'h0, input_data[KEY_WIDTH+META_WIDTH+32 +: 10], input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};
+						output_word[63:0] <= {22'h0, (input_data[KEY_WIDTH+META_WIDTH+32 +: 10]/8), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};
 						output_word[511:64] <= 0;
 					end
 					else if (htopcode==HTOP_GETCOND) begin
@@ -279,7 +279,7 @@ always @(posedge clk) begin
 							meta_data <= input_data[KEY_WIDTH +: META_WIDTH];
 							key_data <= input_data[KEY_WIDTH-1:0];
 							input_ready <= 1;
-							output_word[63:0] <= {22'h0, input_data[KEY_WIDTH+META_WIDTH+32 +: 10], input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
+							output_word[63:0] <= {22'h0, (input_data[KEY_WIDTH+META_WIDTH+32 +: 10]/8), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
 							output_word[511:64] <= 0;
 							dropit <= cond_drop;
 							
