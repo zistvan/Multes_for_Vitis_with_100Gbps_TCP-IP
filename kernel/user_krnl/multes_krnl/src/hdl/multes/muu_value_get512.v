@@ -23,7 +23,7 @@ module muu_Value_Get512 #(
 	parameter MEMORY_WIDTH = 512,
 	parameter SUPPORT_SCANS = 0, 
 	parameter USER_BITS = 3,
-	parameter MAX_WORDS_IN_PACKET = 160
+	parameter MAX_WORDS_IN_PACKET = 1152/64 //MTU-headers / 64
 	)
     (
 	// Clock
