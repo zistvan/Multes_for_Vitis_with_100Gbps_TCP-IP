@@ -164,7 +164,7 @@ always @(posedge clk) begin
             words_since_last <= words_since_last+1;					
         end
         
-        if (words_since_last==MAX_WORDS_IN_PACKET) begin
+        if (words_since_last>=MAX_WORDS_IN_PACKET) begin
             must_last <= 1;
         end else begin
             must_last <= 0;
