@@ -98,9 +98,11 @@ wire is_write;
 wire send_answer;
 
 
-assign value_ready = (output_ready==1 && state==ST_VALUE) ? 1 : ((prev_state==ST_VALUE || state==ST_DROP) & flush);
+//assign value_ready = (output_ready==1 && state==ST_VALUE) ? 1 : ((prev_state==ST_VALUE || state==ST_DROP) & flush);
+assign value_ready = (state==ST_VALUE) ? output_ready : ( state==ST_DROP ? flush : 0); 
 
-assign repl_in_ready = (output_ready==1 && state==ST_VALUE_REPL) ? 1 : ((prev_state==ST_VALUE_REPL) & flush);
+//assign repl_in_ready = (output_ready==1 && state==ST_VALUE_REPL) ? 1 : ((prev_state==ST_VALUE_REPL) & flush);
+assign repl_in_ready = (state==ST_VALUE_REPL) ? output_ready : 0;
 
 assign output_data = {meta_data,output_word};
 
@@ -160,16 +162,17 @@ always @(posedge clk) begin
 		
         if (output_last==1 && output_valid==1 && output_ready==1) begin
             words_since_last <= 1;
+            must_last <= 0;
         end else if (output_valid==1 && output_ready==1) begin
-            words_since_last <= words_since_last+1;					
+            words_since_last <= words_since_last+1;		
+            if (words_since_last>=MAX_WORDS_IN_PACKET) begin
+            	must_last <= 1;
+        	end else begin
+            	must_last <= 0;
+        	end
         end
         
-        if (words_since_last>=MAX_WORDS_IN_PACKET) begin
-            must_last <= 1;
-        end else begin
-            must_last <= 0;
-        end
-
+       
         
         if (SUPPORT_SCANS==1) begin
 			
@@ -366,10 +369,16 @@ always @(posedge clk) begin
 					end else if (hasvalue==1 && toread>0 && dropit==1) begin							
 						state <= ST_DROP;						
 						flush <= 1;
-						output_last <= (SUPPORT_SCANS==1 && scanning==1) ? must_last : 1;
+						output_last <= (SUPPORT_SCANS==1 && scanning==1) ? must_last : 1;	
+						if (must_last==1) begin
+							must_last<= 0;
+						end;											
 					end else begin
 						output_last <= (SUPPORT_SCANS==1 && scanning==1) ? must_last : 1;
 						state <= ST_IDLE;
+						if (must_last==1) begin
+							must_last<= 0;
+						end;
 					end
 					
 				end
@@ -400,6 +409,7 @@ always @(posedge clk) begin
 					output_valid <= 1;
 					output_word <= value_data;
 					output_last <= must_last;
+
 					
 					//if (first_value_word==1 && value_data[15:0]<1500) begin
 					//	toread <= (value_data[15:0]+63)/8-1;
@@ -408,10 +418,14 @@ always @(posedge clk) begin
 						state <= ST_IDLE;	
 						output_last <= (SUPPORT_SCANS==1 && scanning==1) ? must_last : 1;
 
-						if (toread<8) begin
+					/*	if (toread<8) begin
 							flush <= 1;
-						end
+						end */
 					end
+
+					if (must_last==1) begin
+							must_last<= 0;
+						end;
 				end
 			end
 
@@ -446,6 +460,10 @@ always @(posedge clk) begin
 							flush <= 1;
 						end
 					end
+
+					if (must_last==1) begin
+							must_last<= 0;
+						end;
 				end
 			end			
 

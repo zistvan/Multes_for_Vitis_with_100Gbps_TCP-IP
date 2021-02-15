@@ -18,6 +18,7 @@
 `default_nettype none
 
 module muu_TopWrapper_fclk512 #(
+      parameter MAX_INFLIGHT = 16,
       parameter IS_SIM = 0,
       parameter USER_BITS = 3,
       parameter HASHTABLE_MEM_SIZE = 16, //512bit lines x 2^SIZE
@@ -955,6 +956,9 @@ nukv_fifogen_passthrough #(
                 );  
 
 
+  reg[7:0] inFlightCount;
+  reg inFlightOk;
+  
   reg derMetaValid;
   wire derMetaReady;
   reg[15:0] derMetaData;
@@ -973,21 +977,48 @@ nukv_fifogen_passthrough #(
         end
       end
     end
+
+    always @(posedge aclk) begin
+      if(reset) begin
+        inFlightCount <= 0;
+        inFlightOk <= 1;        
+      end else begin
+        if (s_axis_tx_status_TVALID==1 && m_axis_tx_metadata_TVALID==1 && m_axis_tx_metadata_TREADY==1) begin
+          inFlightOk <= inFlightOk;
+          inFlightCount <= inFlightCount;
+        end else if (s_axis_tx_status_TVALID==0 && m_axis_tx_metadata_TVALID==1 && m_axis_tx_metadata_TREADY==1) begin
+          inFlightCount <= inFlightCount+1;
+          if (inFlightCount>=MAX_INFLIGHT-1) begin
+            inFlightOk <= 0;
+          end
+        end else if (s_axis_tx_status_TVALID==1) begin
+          inFlightCount <= inFlightCount-1;
+          if (inFlightCount<MAX_INFLIGHT-1) begin
+            inFlightOk <= 1;
+          end
+        end 
+
+      end
+    end
     
     wire derOutValid;
     wire derOutReady;
     wire[512+64-1:0] derOutData;
     wire derOutLast;
+    wire derMetaValidIntern;
     
-    assign derOutValid = fromKvsValid | injectValid;
-    assign fromKvsReady = derOutReady; 
+    assign derMetaValidIntern = derMetaValid & fromKvsReady;
+    
+    assign derOutValid = (fromKvsValid | injectValid) & fromKvsReady;
+
+    assign fromKvsReady = derOutReady & derMetaReady & inFlightOk; 
     assign derOutData = (injectValid==1 && fromKvsValid==0) ? {1'b1,injectWord} : {fromKvsLast,fromKvsData};
     assign derOutLast = (injectValid==1 && fromKvsValid==0) ? 1 : fromKvsLast;
 
     //axis_data_saf_kvs
         nukv_fifogen #(
             .DATA_SIZE(512+64+1),
-            .ADDR_BITS(11)
+            .ADDR_BITS(6)
         ) fifo_lastdata (
                 .clk(aclk),//.s_axis_aclk(aclk),
                 .rst(reset),//.s_axis_aresetn(~reset),
@@ -1009,7 +1040,7 @@ nukv_fifogen_passthrough #(
                 ) fifo_lastmeta (
                         .clk(aclk),
                         .rst(reset),
-                        .s_axis_tvalid(derMetaValid),
+                        .s_axis_tvalid(derMetaValidIntern),
                         .s_axis_tready(derMetaReady),
                         .s_axis_tdata({derMetaLen,derMetaData}),  
                         .m_axis_tvalid(m_axis_tx_metadata_TVALID),
@@ -1041,21 +1072,21 @@ nukv_fifogen_passthrough #(
      derMetaLen <= 0;  
   end
   else begin
-     if (derMetaValid==1 && derMetaReady==1) begin
+     if (derMetaValid==1 && fromKvsReady==1) begin
          derMetaValid <= 0;
      end
 
-     if (derOutValid==1 && derOutReady==1 ) begin
+     if (derOutValid==1 && fromKvsReady==1 ) begin
       derMetaLen <= derMetaLen+64;
      end
   
-     if (derOutValid==1 && derOutReady==1 && is_first_output_cycle==1) begin        
+     if (derOutValid==1 && fromKvsReady==1 && is_first_output_cycle==1) begin        
         derMetaData <= derOutData[512 +: 16];
         is_first_output_cycle <= 0;   
           derMetaLen <= 64;
      end    
 
-     if (derOutReady==1 && derOutValid==1 && derOutLast==1) begin
+     if (fromKvsReady==1 && derOutValid==1 && derOutLast==1) begin
          derMetaValid <= 1;
          is_first_output_cycle <= 1;
      end
@@ -1206,3 +1237,4 @@ nukv_fifogen_passthrough #(
 
 */
 endmodule
+
