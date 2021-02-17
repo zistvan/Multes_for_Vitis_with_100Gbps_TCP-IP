@@ -30,7 +30,7 @@ module muu_Top_Module_LMem512 #(
     parameter KEY_WIDTH = 64,
     parameter HASHTABLE_MEM_SIZE = 20,
     parameter VALUESTORE_MEM_SIZE = 24,
-    parameter FILTER_ENABLED=0,
+    parameter FILTER_ENABLED=1,
 	parameter IS_SIM = 0,
     parameter USER_BITS = 3,
     parameter ENABLE_CHECKPOINTS = 0 // to simplify porting to 512 bits!
@@ -1777,14 +1777,28 @@ generate
 	    assign par_to_proc_TDATA = predconf_b_data[511:0];
 	    assign predconf_b_ready = par_to_proc_TREADY;
 
+	    //The actual processing happens outside of this module. See outgoing signals!
+
 	    assign cond_valid = par_from_proc_TVALID;
 	    assign cond_drop = par_to_proc_TDATA == 0 ? 0 : 1;
 	    assign par_from_proc_TREADY = cond_ready;
 
-	    assign value_valid = val_from_proc_TVALID;
-	    assign value_data  = val_from_proc_TDATA;
-	    assign value_last = val_from_proc_TLAST;
-	    assign val_from_proc_TREADY = value_ready;
+	    nukv_fifogen #(
+		    .DATA_SIZE(VALUE_WIDTH),
+		    .ADDR_BITS(6)
+		) fifo_value_from_proc (
+		    .clk(clk),
+		    .rst(rst),
+		    
+		    .s_axis_tdata(val_from_proc_TDATA),
+		    .s_axis_tvalid(val_from_proc_TVALID),
+		    .s_axis_tready(val_from_proc_TREADY),
+		    .s_axis_talmostfull(),
+		    
+		    .m_axis_tdata(value_read_data),
+		    .m_axis_tvalid(value_read_valid),
+		    .m_axis_tready(value_read_ready)
+		);
 
     end
 endgenerate

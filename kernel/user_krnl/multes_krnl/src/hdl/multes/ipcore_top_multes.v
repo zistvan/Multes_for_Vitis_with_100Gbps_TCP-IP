@@ -20,7 +20,9 @@ module ipcore_top_multes
   parameter integer C_S_AXIS_TCP_RX_DATA_TDATA_WIDTH          = 512,
   parameter integer C_M_AXIS_TCP_TX_META_TDATA_WIDTH          = 32 ,
   parameter integer C_M_AXIS_TCP_TX_DATA_TDATA_WIDTH          = 512,
-  parameter integer C_S_AXIS_TCP_TX_STATUS_TDATA_WIDTH        = 64 
+  parameter integer C_S_AXIS_TCP_TX_STATUS_TDATA_WIDTH        = 64,
+
+  parameter integer ENABLE_PROCESSING                         = 0
 
 )
 (
@@ -497,6 +499,54 @@ assign m_axis_tcp_tx_meta_tlast = 1;
 
 assign m_axis_tcp_tx_data_tkeep = 64'hffffffffffffffff;
 
+
+wire [512-1:0]  val_to_proc_tdata;
+wire         val_to_proc_tvalid;
+wire         val_to_proc_tlast;
+wire         val_to_proc_tready;
+
+wire [512-1:0]  par_to_proc_tdata;
+wire         par_to_proc_tvalid;
+wire         par_to_proc_tlast;
+wire         par_to_proc_tready;
+
+wire [512-1:0]  val_from_proc_tdata;
+wire         val_from_proc_tvalid;
+wire         val_from_proc_tlast;
+wire         val_from_proc_tready;
+
+wire [0:0]  par_from_proc_tdata;
+wire         par_from_proc_tvalid;
+wire         par_from_proc_tlast;
+wire         par_from_proc_tready;
+
+
+ipcore_user_processing processing_core (
+  .aclk(uclk),
+  .aresetn(~urst),
+  
+  .in_word_tdata(val_to_proc_tdata),
+  .in_word_tvalid(val_to_proc_tvalid),
+  .in_word_tlast(val_to_proc_tlast),
+  .in_word_tready(val_to_proc_tready),
+
+  .parameter_tdata(par_to_proc_tdata),
+  .parameter_tvalid(par_to_proc_tvalid),
+  .parameter_tlast(par_to_proc_tlast),
+  .parameter_tready(par_to_proc_tready),
+
+  .out_word_tdata(val_from_proc_tdata),
+  .out_word_tvalid(val_from_proc_tvalid),
+  .out_word_tlast(val_from_proc_tlast),
+  .out_word_tready(val_from_proc_tready),
+
+  .drop_decision_tdata(par_from_proc_tdata),
+  .drop_decision_tvalid(par_from_proc_tvalid),
+  .drop_decision_tlast(par_from_proc_tlast),
+  .drop_decision_tready(par_from_proc_tready)
+
+);
+
 muu_TopWrapper_fclk512 # (
   .HASHTABLE_MEM_SIZE(21), 
   .VALUESTORE_MEM_SIZE(21)
@@ -613,6 +663,27 @@ muu_TopWrapper_fclk512 # (
 
   .debug_kvs                 (m_axis_udp_tx_meta_tdata),
   
+
+  .val_to_proc_tdata(val_to_proc_tdata),
+  .val_to_proc_tvalid(val_to_proc_tvalid),
+  .val_to_proc_tlast(val_to_proc_tlast),
+  .val_to_proc_tready(val_to_proc_tready),
+
+  .par_to_proc_tdata(par_to_proc_tdata),
+  .par_to_proc_tvalid(par_to_proc_tvalid),
+  .par_to_proc_tlast(par_to_proc_tlast),
+  .par_to_proc_tready(par_to_proc_tready),
+
+  .val_from_proc_tdata(val_from_proc_tdata),
+  .val_from_proc_tvalid(val_from_proc_tvalid),
+  .val_from_proc_tlast(val_from_proc_tlast),
+  .val_from_proc_tready(val_from_proc_tready),
+
+  .par_from_proc_tdata(par_from_proc_tdata),
+  .par_from_proc_tvalid(par_from_proc_tvalid),
+  .par_from_proc_tlast(par_from_proc_tlast),
+  .par_from_proc_tready(par_from_proc_tready),
+
   //.fclk(fclk),
   
   .aclk(uclk),                                                          // input wire aclk

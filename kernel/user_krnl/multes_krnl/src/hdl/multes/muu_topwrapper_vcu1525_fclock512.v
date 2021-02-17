@@ -158,6 +158,28 @@ module muu_TopWrapper_fclk512 #(
               output wire          bmap_wrcmd_valid,
               input wire           bmap_wrcmd_ready, 
 
+
+              output wire [512-1:0]  val_to_proc_tdata,
+              output wire         val_to_proc_tvalid,
+              output wire         val_to_proc_tlast,
+              input wire         val_to_proc_tready,
+
+              output wire [512-1:0]  par_to_proc_tdata,
+              output wire         par_to_proc_tvalid,
+              output wire         par_to_proc_tlast,
+              input wire         par_to_proc_tready,
+
+              input wire [512-1:0]  val_from_proc_tdata,
+              input wire         val_from_proc_tvalid,
+              input wire         val_from_proc_tlast,
+              output wire         val_from_proc_tready,
+
+              input wire [0:0]  par_from_proc_tdata,
+              input wire         par_from_proc_tvalid,
+              input wire         par_from_proc_tlast,
+              output wire         par_from_proc_tready,
+              
+
               output wire [255:0] debug_kvs
 
         );
@@ -663,6 +685,27 @@ module muu_TopWrapper_fclk512 #(
           .s_axis_open_status_TVALID(s_axis_open_status_TVALID_f),
           .s_axis_open_status_TREADY(s_axis_open_status_TREADY_f),
           .s_axis_open_status_TDATA(s_axis_open_status_TDATA_f),
+
+          .val_to_proc_TDATA(val_to_proc_tdata),
+          .val_to_proc_TVALID(val_to_proc_tvalid),
+          .val_to_proc_TLAST(val_to_proc_tlast),
+          .val_to_proc_TREADY(val_to_proc_tready),
+
+          .par_to_proc_TDATA(par_to_proc_tdata),
+          .par_to_proc_TVALID(par_to_proc_tvalid),
+          .par_to_proc_TLAST(par_to_proc_tlast),
+          .par_to_proc_TREADY(par_to_proc_tready),
+
+          .val_from_proc_TDATA(val_from_proc_tdata),
+          .val_from_proc_TVALID(val_from_proc_tvalid),
+          .val_from_proc_TLAST(val_from_proc_tlast),
+          .val_from_proc_TREADY(val_from_proc_tready),
+
+          .par_from_proc_TDATA(par_from_proc_tdata),
+          .par_from_proc_TVALID(par_from_proc_tvalid),
+          .par_from_proc_TLAST(par_from_proc_tlast),
+          .par_from_proc_TREADY(par_from_proc_tready),
+  
           
           .debug(debug_kvs)
    );
