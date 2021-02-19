@@ -1749,7 +1749,7 @@ generate
     if (FILTER_ENABLED==0) begin
         //no filters in the project, cuts out whole part
         assign cond_valid = predconf_b_valid;
-        assign cond_drop = (predconf_b_valid ==1 && predconf_b_data[511:0]==0) ? 0 : 1;
+        assign cond_drop = 0;
         assign predconf_b_ready = cond_ready;
 
         assign value_read_ready_buf = value_read_ready;
@@ -1774,7 +1774,7 @@ generate
     
 	    assign par_to_proc_TVALID = predconf_b_valid;
 	    assign par_to_proc_TLAST = 1;
-	    assign par_to_proc_TDATA = predconf_b_data[511:0];
+	    assign par_to_proc_TDATA = predconf_b_fulldata[1 +: 512];
 	    assign predconf_b_ready = par_to_proc_TREADY;
 
 	    //The actual processing happens outside of this module. See outgoing signals!
