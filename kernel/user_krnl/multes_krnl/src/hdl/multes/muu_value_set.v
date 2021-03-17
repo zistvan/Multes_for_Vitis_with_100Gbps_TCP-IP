@@ -491,7 +491,7 @@ always @(posedge clk) begin
 				if (valueReadyInt==1 && value_valid==1 && pe_ready==1) begin 
 
 					
-					int_pe_data <= {value_data, pred_meta};
+					int_pe_data <= {pred_meta, value_data};
 					int_pe_scan <= need_scan;
 
 					valueReadyInt <= 0;

@@ -23,9 +23,8 @@ USE IEEE.STD_LOGIC_TEXTIO.all;
 
 entity muu_session_Top512 is
 	generic(
-		BUFFER_COUNT  : integer := 2;
-		USER_BITS     : integer := 3;
-		OPS_THRESHOLD : integer := 8
+		BUFFER_COUNT  : integer := 8;
+		USER_BITS     : integer := 3
 	);
 	port(
 		clk           : in  std_logic;
@@ -350,6 +349,10 @@ begin
                          
                         if (packetInnerLastD1(X) = '1' and packet_data(15 downto 0)="1111111111111111") then
                           locationPending(X) <= packet_data(15+32 downto 32)+1;
+                          
+                          if (packet_data(15+32 downto 32)=0) then                            
+                            packetInnerLast(X) <= '1';
+                          end if;
                         end if; 
                                                
                         
