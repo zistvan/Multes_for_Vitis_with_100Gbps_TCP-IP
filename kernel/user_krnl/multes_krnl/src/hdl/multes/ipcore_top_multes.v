@@ -548,8 +548,8 @@ ipcore_user_processing processing_core (
 );
 
 muu_TopWrapper_fclk512 # (
-  .HASHTABLE_MEM_SIZE(21), 
-  .VALUESTORE_MEM_SIZE(21)
+  .HASHTABLE_MEM_SIZE(22), //2^22 * 64B = 256MB
+  .VALUESTORE_MEM_SIZE(22)
   ) multiuser_kvs_top  (
 
   .m_axis_open_connection_TVALID(m_axis_tcp_open_connection_tvalid),

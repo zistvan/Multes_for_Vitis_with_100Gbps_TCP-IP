@@ -18,7 +18,6 @@
 `default_nettype none
 
 module muu_TopWrapper_fclk512 #(
-      parameter MAX_INFLIGHT = 16,
       parameter IS_SIM = 0,
       parameter USER_BITS = 3,
       parameter HASHTABLE_MEM_SIZE = 16, //512bit lines x 2^SIZE
@@ -66,9 +65,9 @@ module muu_TopWrapper_fclk512 #(
         //output wire [7:0]       m_axis_tx_data_TKEEP,
         output wire [0:0]       m_axis_tx_data_TLAST,
 
-        output wire       m_axis_tx_metadata_TVALID,
+        output reg       m_axis_tx_metadata_TVALID,
         input wire      m_axis_tx_metadata_TREADY,
-        output wire  [31:0] m_axis_tx_metadata_TDATA,
+        output reg  [31:0] m_axis_tx_metadata_TDATA,
 
         input wire      s_axis_tx_status_TVALID,
         output wire       s_axis_tx_status_TREADY,
@@ -999,13 +998,19 @@ nukv_fifogen_passthrough #(
                 );  
 
 
-  reg[7:0] inFlightCount;
+  reg[7:0] waitingForStatusWord;
   reg inFlightOk;
   
   reg derMetaValid;
   wire derMetaReady;
   reg[15:0] derMetaData;
   reg[15:0] derMetaLen;
+
+  reg[7:0] dataTokens;
+
+  wire out_meta_valid;
+  reg out_meta_ready;
+  wire [31:0] out_meta_data;
 
     always @(posedge aclk) begin  
       if(reset) begin
@@ -1023,23 +1028,53 @@ nukv_fifogen_passthrough #(
 
     always @(posedge aclk) begin
       if(reset) begin
-        inFlightCount <= 0;
-        inFlightOk <= 1;        
+        m_axis_tx_metadata_TDATA <= 0;
+        m_axis_tx_metadata_TVALID <= 0;
+        out_meta_ready <= 0;      
+        waitingForStatusWord <= 0;
+        dataTokens <= 0;
       end else begin
-        if (s_axis_tx_status_TVALID==1 && m_axis_tx_metadata_TVALID==1 && m_axis_tx_metadata_TREADY==1) begin
-          inFlightOk <= inFlightOk;
-          inFlightCount <= inFlightCount;
-        end else if (s_axis_tx_status_TVALID==0 && m_axis_tx_metadata_TVALID==1 && m_axis_tx_metadata_TREADY==1) begin
-          inFlightCount <= inFlightCount+1;
-          if (inFlightCount>=MAX_INFLIGHT-1) begin
-            inFlightOk <= 0;
-          end
-        end else if (s_axis_tx_status_TVALID==1) begin
-          inFlightCount <= inFlightCount-1;
-          if (inFlightCount<MAX_INFLIGHT-1) begin
-            inFlightOk <= 1;
-          end
+        
+        if (m_axis_tx_metadata_TREADY==1 && m_axis_tx_metadata_TVALID==1) begin
+          m_axis_tx_metadata_TVALID <= 0;
+        end
+
+        if (out_meta_ready==1 && out_meta_valid==1) begin
+          out_meta_ready <= 0;
         end 
+
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
+          dataTokens <= dataTokens-1;
+        end
+
+        if (waitingForStatusWord==0 && out_meta_ready==0) begin
+
+          if (m_axis_tx_metadata_TREADY==1) begin
+            m_axis_tx_metadata_TVALID <= out_meta_valid;
+            m_axis_tx_metadata_TDATA <= out_meta_data;
+
+            if (out_meta_valid==1) begin
+              waitingForStatusWord <= waitingForStatusWord+1;
+            end
+          end
+
+        end else if (waitingForStatusWord==1 && out_meta_ready==0) begin
+
+          if (s_axis_tx_status_TVALID==1) begin
+            waitingForStatusWord <= waitingForStatusWord-1;
+
+            if (s_axis_tx_status_TDATA[63:62]==0) begin
+              // no error        
+              out_meta_ready <= 1;
+              dataTokens <= dataTokens+1;
+
+              if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
+                dataTokens <= dataTokens;
+              end
+            end
+          end
+
+        end
 
       end
     end
@@ -1054,14 +1089,14 @@ nukv_fifogen_passthrough #(
     
     assign derOutValid = (fromKvsValid | injectValid) & fromKvsReady;
 
-    assign fromKvsReady = derOutReady & derMetaReady & inFlightOk; 
+    assign fromKvsReady = derOutReady & derMetaReady; 
     assign derOutData = (injectValid==1 && fromKvsValid==0) ? {1'b1,injectWord} : {fromKvsLast,fromKvsData};
     assign derOutLast = (injectValid==1 && fromKvsValid==0) ? 1 : fromKvsLast;
 
     //axis_data_saf_kvs
         nukv_fifogen #(
             .DATA_SIZE(512+64+1),
-            .ADDR_BITS(6)
+            .ADDR_BITS(9)
         ) fifo_lastdata (
                 .clk(aclk),//.s_axis_aclk(aclk),
                 .rst(reset),//.s_axis_aresetn(~reset),
@@ -1079,24 +1114,24 @@ nukv_fifogen_passthrough #(
                 
          nukv_fifogen #(
                     .DATA_SIZE(32),
-                    .ADDR_BITS(4)
+                    .ADDR_BITS(5)
                 ) fifo_lastmeta (
                         .clk(aclk),
                         .rst(reset),
                         .s_axis_tvalid(derMetaValidIntern),
                         .s_axis_tready(derMetaReady),
                         .s_axis_tdata({derMetaLen,derMetaData}),  
-                        .m_axis_tvalid(m_axis_tx_metadata_TVALID),
-                        .m_axis_tready(m_axis_tx_metadata_TREADY),
-                        .m_axis_tdata(m_axis_tx_metadata_TDATA)
+                        .m_axis_tvalid(out_meta_valid),
+                        .m_axis_tready(out_meta_ready),
+                        .m_axis_tdata(out_meta_data)
                         );              
    
    
-   assign   m_axis_tx_data_TVALID =  finalOutValid ;
+   assign   m_axis_tx_data_TVALID = dataTokens==0 ? 0 : finalOutValid ;
    assign   m_axis_tx_data_TDATA = finalOutData[511:0];
    //assign   m_axis_tx_data_TKEEP = 8'b11111111;
    assign   m_axis_tx_data_TLAST = finalOutLast;
-   assign   finalOutReady =  m_axis_tx_data_TREADY ;
+   assign   finalOutReady =  dataTokens == 0 ? 0 :  m_axis_tx_data_TREADY ;
    
 /*   assign   m_axis_tx_data_TVALID = (is_first_output_cycle==0) ? finalOutValid : (finalOutValid && m_axis_tx_metadata_TREADY);
    assign   m_axis_tx_data_TDATA = finalOutData[63:0];

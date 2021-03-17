@@ -917,7 +917,7 @@ begin
 									leaderPeerId(conv_integer(inCmdUser)) <= inCmdPeerId(PEER_BITS-1 downto 0);
 
 									if (inCmdPeerId < peerCount(conv_integer(inCmdUser))) then
-										nextLeaderId(conv_integer(inCmdUser)) <= inCmdPeerId + 1;
+										nextLeaderId(conv_integer(inCmdUser)) <= inCmdPeerId(PEER_BITS-1 downto 0) + 1;
 									else
 										nextLeaderId(conv_integer(inCmdUser))    <= (others => '0');
 										nextLeaderId(conv_integer(inCmdUser))(0) <= '1';
@@ -1186,10 +1186,13 @@ begin
 									--end loop;
 									inCmdUserReg <= inCmdUser;
 
-									-- TODO Make sure that this read sees the potential changes from before the if...
-									preloadPeerZxidAck <= peerZxidAck(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & quorumIterationVar(PEER_BITS-1 downto 0)));
 									preloadPeerZxidCmt <= peerZxidCmt(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & quorumIterationVar(PEER_BITS - 1 downto 0))); 
 
+									if (inCmdPeerId = peerCount(conv_integer(inCmdUser)) + 1) then
+										preloadPeerZxidAck <= inCmdZxid;
+									else 
+										preloadPeerZxidAck <= peerZxidAck(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & quorumIterationVar(PEER_BITS-1 downto 0)));										
+									end if;
 
 									preloadPeerCount <= peerCount(conv_integer(inCmdUser));
 									preloadPeerCountForCommit <= peerCountForCommit(conv_integer(inCmdUser));
@@ -1667,7 +1670,7 @@ begin
 
 						--for majority need to add 1 to the peercount to count	      
 						--ZSOLT
-						if ((preloadPeerCount > 2 and commitableCountTimesTwo >= (preloadPeerCountForCommit))
+						if ((preloadPeerCount > 1 and commitableCountTimesTwo >= (preloadPeerCountForCommit))
 		                   or (preloadPeerCount < 3 and commitableCount >= preloadPeerCount) 
 		                    or (commitableCount = 1 and flagLate = '1')) 
 

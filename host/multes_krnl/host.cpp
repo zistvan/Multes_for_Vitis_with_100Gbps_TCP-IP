@@ -33,7 +33,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DATA_SIZE 128*1024*1024
+//define memory size for each one of the 4 axi locations
+#define DATA_SIZE 256*1024*1024
+
 
 void wait_for_enter(const std::string &msg) {
     std::cout << msg << std::endl;
@@ -54,11 +56,10 @@ int main(int argc, char **argv) {
 
     cl::Kernel user_kernel;
     cl::Kernel network_kernel;
-
-    auto size = DATA_SIZE;
     
+    auto size = DATA_SIZE;
     //Allocate Memory in Host Memory
-    auto vector_size_bytes = sizeof(int) * size;
+    auto vector_size_bytes = DATA_SIZE;
     std::vector<int, aligned_allocator<int>> network_ptr0(size);
     std::vector<int, aligned_allocator<int>> network_ptr1(size);
     std::vector<int, aligned_allocator<int>> user_ptr0(size);
@@ -115,12 +116,13 @@ int main(int argc, char **argv) {
     double durationUs = 0.0;
     uint32_t timeInSeconds = 2;
     uint32_t baseIpAddr = 0x0A01D479; //alveo1a
-
+    int ip [4];
+	
     if (argc >= 3)
     {
         std::string s = argv[2];
         std::string delimiter = ".";
-        int ip [4];
+
         size_t pos = 0;
         std::string token;
         int i = 0;
@@ -140,7 +142,7 @@ int main(int argc, char **argv) {
 
     // Set network kernel arguments
     OCL_CHECK(err, err = network_kernel.setArg(0, baseIpAddr)); // Default IP address
-    OCL_CHECK(err, err = network_kernel.setArg(1, 0)); // Board number
+    OCL_CHECK(err, err = network_kernel.setArg(1, uint32_t(ip[3]%8))); // Board number
     OCL_CHECK(err, err = network_kernel.setArg(2, baseIpAddr)); // ARP lookup
 
     OCL_CHECK(err,
