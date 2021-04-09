@@ -68,11 +68,11 @@ var (
 
 const (
    // DefaultTimeout is the default socket read/write timeout.
-	DefaultTimeout      = 1000 * time.Millisecond
+	DefaultTimeout      = 2000 * time.Millisecond
 
    // DefaultMaxIdleConns is the default maximum number of idle connections
    // kept for any single address
-	DefaultMaxIdleConns = 2
+	DefaultMaxIdleConns = 64
 )
 
 const buffered = 8 // arbitrary buffered channel size, for readability

@@ -642,6 +642,23 @@ always @(posedge clk) begin
 						output_data[KEY_WIDTH+META_WIDTH+USER_BITS+VALPOINTER_WIDTH +: 16] <= writebackEntry[KEY_WIDTH +VALPOINTER_WIDTH-16 +: 16];
 						state <= ST_IDLE;
 					
+					end			
+
+					HTOP_GETRAW : begin
+
+						output_valid <= 1;
+						output_data[0 +: KEY_WIDTH+META_WIDTH+USER_BITS] <= inputReg[0 +: KEY_WIDTH+META_WIDTH+USER_BITS];		
+
+						if (writebackEntry[KEY_WIDTH+VALPOINTER_WIDTH +: VALPOINTER_WIDTH] ==0) begin
+							output_data[KEY_WIDTH+META_WIDTH+USER_BITS +: VALPOINTER_WIDTH] <= writebackEntry[KEY_WIDTH +: VALPOINTER_WIDTH];
+							output_data[KEY_WIDTH+META_WIDTH+USER_BITS+VALPOINTER_WIDTH +: 16] <= writebackEntry[KEY_WIDTH +VALPOINTER_WIDTH-16 +: 16];
+						end
+						else begin
+							output_data[KEY_WIDTH+META_WIDTH+USER_BITS +: VALPOINTER_WIDTH] <= writebackEntry[KEY_WIDTH+VALPOINTER_WIDTH  +: VALPOINTER_WIDTH];
+							output_data[KEY_WIDTH+META_WIDTH+USER_BITS+VALPOINTER_WIDTH +: 16] <= writebackEntry[KEY_WIDTH+VALPOINTER_WIDTH  +VALPOINTER_WIDTH-16 +: 16]; 
+						end
+						state <= ST_IDLE;
+					
 					end					
 
 					HTOP_SETNEXT,HTOP_SETCUR : begin

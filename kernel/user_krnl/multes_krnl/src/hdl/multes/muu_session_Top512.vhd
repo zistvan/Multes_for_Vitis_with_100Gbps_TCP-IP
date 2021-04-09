@@ -23,7 +23,7 @@ USE IEEE.STD_LOGIC_TEXTIO.all;
 
 entity muu_session_Top512 is
 	generic(
-		BUFFER_COUNT  : integer := 8;
+		BUFFER_COUNT  : integer := 12;
 		USER_BITS     : integer := 3
 	);
 	port(
@@ -72,20 +72,22 @@ architecture beh of muu_session_Top512 is
 		);
 	END component;
 
-	component zk_fifo_576x1024
+	component zk_fifo_1024w_256d
 		PORT(
 			s_aclk         : IN  STD_LOGIC;
 			s_aresetn      : IN  STD_LOGIC;
 			s_axis_tvalid  : IN  STD_LOGIC;
 			s_axis_tready  : OUT STD_LOGIC;
-			s_axis_tdata   : IN  STD_LOGIC_VECTOR(1023 DOWNTO 0);
+			s_axis_tdata   : IN  STD_LOGIC_VECTOR(511 DOWNTO 0);
+			s_axis_tuser   : IN  STD_LOGIC_VECTOR(63 DOWNTO 0);
 			s_axis_tlast   : in std_logic;
 			m_axis_tvalid  : OUT STD_LOGIC;
 			m_axis_tready  : IN  STD_LOGIC;
-			m_axis_tdata   : OUT STD_LOGIC_VECTOR(1023 DOWNTO 0);
+			m_axis_tdata   : OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+			m_axis_tuser   : out  STD_LOGIC_VECTOR(63 DOWNTO 0);
 			m_axis_tlast   : out std_logic;
 			axis_prog_full : out std_logic;
-			axis_data_count : out std_logic_vector(10 downto 0)
+			axis_data_count : out std_logic_vector(8 downto 0)
 		);
 	END component;
 
@@ -127,7 +129,7 @@ architecture beh of muu_session_Top512 is
 	type ARRAY1024 is array (BUFFER_COUNT - 1 downto 0) of std_logic_vector(1023 downto 0);
 	type ARRAY576 is array (BUFFER_COUNT - 1 downto 0) of std_logic_vector(511+64 downto 0);
 	type ARRAY16 is array (BUFFER_COUNT - 1 downto 0) of std_logic_vector(15 downto 0);
-	type ARRAY11 is array (BUFFER_COUNT - 1 downto 0) of std_logic_vector(10 downto 0);
+	type ARRAY09 is array (BUFFER_COUNT - 1 downto 0) of std_logic_vector(8 downto 0);
 
 	signal eventValid : std_logic;
 	signal eventReady : std_logic;
@@ -163,7 +165,7 @@ architecture beh of muu_session_Top512 is
 	signal bufferOutDataArrWide    : ARRAY1024;
 	signal bufferOutDataArr    : ARRAY576;
 	signal bufferOutDataFolded : ARRAY576;	
-	signal bufferOutOccup : ARRAY11;
+	signal bufferOutOccup : ARRAY09;
 
 	signal packetReady    : std_logic;
 	signal waitingFirst   : std_logic;
@@ -213,9 +215,9 @@ architecture beh of muu_session_Top512 is
 	ATTRIBUTE MARK_DEBUG : string;    
     ATTRIBUTE MARK_DEBUG of locationPending: SIGNAL IS "TRUE";
     ATTRIBUTE MARK_DEBUG of packetInnerLast: SIGNAL IS "TRUE";
-    
 
 begin
+
 
 	-----------------------------------------------------------------------------
 	-----------------------------------------------------------------------------
@@ -244,13 +246,17 @@ begin
 				readreq_valid <= '0';
 				stopped       <= '0';
 			else
+
+				debug_out(BUFFER_COUNT-1 downto 0) <= bufferEmpty;
+				debug_out(BUFFER_COUNT+ BUFFER_COUNT-1 downto BUFFER_COUNT) <= locationMask;
+
 				stopped <= stop;
 
 				if (readreq_ready = '1') then
 					readreq_valid <= '0';
 				end if;
 
-				if (evdataInFull = '0') then
+				if (evdataInReady = '1' and evdataInValid='1') then
 					evdataInValid <= '0';
 				end if;
 
@@ -270,7 +276,7 @@ begin
 	event_fifo_inst : nukv_fifogen
 		generic map(
 			DATA_SIZE => 64,
-			ADDR_BITS => 7)
+			ADDR_BITS => 4)
 		port map(
 			clk, rst,
 			evdataInData,
@@ -313,10 +319,12 @@ begin
 
 				if (waitingFirst = '1' and packet_valid = '1') then
 					waitingFirst <= '0';
-					packetLengthField <= packet_data(15+32 downto 32)+2;
-				end if;
+					if (packet_data(15 downto 0)="1111111111111111") then
+						packetLengthField <= packet_data(15+32 downto 32)+2;
+				    else 
+				    	packetLengthField <= (others=> '0');
+					end if;
 
-				if (dataFirstCycle = '1') then
 					waitLocation <= '1';
 				end if;
 
@@ -326,8 +334,8 @@ begin
 					haveLocation                            <= '1';
 					
 					for X in 0 to BUFFER_COUNT - 1 loop
-					   if (bufferSelectMask(X) = '1' and locationPending(X)=0) then 
-                        locationPending(X) <= packetLengthField;
+					   if (bufferSelectMask(X) = '1' and locationPending(X)=0 and packetLengthField/=0) then                         
+                        locationPending(X) <= packetLengthField;                        
                        end if;
                     end loop;
 				end if;
@@ -347,13 +355,19 @@ begin
                             packetInnerLast(X) <= '1';
                         end if;
                          
-                        if (packetInnerLastD1(X) = '1' and packet_data(15 downto 0)="1111111111111111") then
-                          locationPending(X) <= packet_data(15+32 downto 32)+1;
-                          
-                          if (packet_data(15+32 downto 32)=0) then                            
-                            packetInnerLast(X) <= '1';
-                          end if;
-                        end if; 
+--                        if (packetInnerLastD1(X) = '1' and packet_data(15 downto 0)="1111111111111111") then
+--                          locationPending(X) <= packet_data(15+32 downto 32)+1;
+--                          
+--                          if (packet_data(15+32 downto 32)=0) then                            
+--                            packetInnerLast(X) <= '1';
+--                          end if;
+--                        end if; 
+
+						if (packetInnerLast(X) = '1' and packet_valid = '1' and packetReady = '1') then
+							waitingFirst <= '1';
+							haveLocation <= '0';
+							locationMask <= (others => '0');
+						end if;
                                                
                         
                        end if;
@@ -384,7 +398,7 @@ begin
 		end if;
 	end process;
 
-	packetReady    <= '1' when ((locationMask(BUFFER_COUNT - 1 downto 0) and bufferInReady(BUFFER_COUNT - 1 downto 0)) /= 0) else '0';
+	packetReady    <= '1' when (waitLocation='0' and (((locationMask(BUFFER_COUNT - 1 downto 0) and bufferInReady(BUFFER_COUNT - 1 downto 0)) /= 0))) else '0';
 	packet_ready   <= packetReady;
 	evdataOutReady <= packet_last and packet_valid and packetReady;
 
@@ -405,7 +419,7 @@ begin
 	------------------------------------------------------------------------------------------------------------------
 	-- FIX THIS LINE -- THE USER NEEDS TO BE ADDED TO THE METADATA!!!
 	------------------------------------------------------------------------------------------------------------------
-	bufferInData(512+64-1 downto 0) <= packet_data & evdataOutData(63 downto 0); -- packet_data & evdataOutData(USER_BITS-1+64 downto 64) & evdataOutData(63-USER_BITS downto 0);
+	--bufferInData(512+64-1 downto 0) <= packet_data & evdataOutData(63 downto 0); -- packet_data & evdataOutData(USER_BITS-1+64 downto 64) & evdataOutData(63-USER_BITS downto 0);
 	------------------------------------------------------------------------------------------------------------------
 	-- LOOK ABOVE!!!
 	------------------------------------------------------------------------------------------------------------------
@@ -413,14 +427,14 @@ begin
 	bufferInValid(BUFFER_COUNT - 1 downto 0) <= locationMask(BUFFER_COUNT - 1 downto 0) when (packet_valid and haveLocation) = '1' else (others => '0');
 
 	gen_bufs : for X in 0 to BUFFER_COUNT - 1 generate
-		gen_bufs_i : zk_fifo_576x1024
+		gen_bufs_i : zk_fifo_1024w_256d
 			port map(
 				clk, rstn,
-				bufferInValid(X), bufferInReady(X), bufferInData, packetInnerLast(X),
-				bufferOutValid(X), bufferOutReady(X), bufferOutDataArrWide(X), bufferOutLast(X),
+				bufferInValid(X), bufferInReady(X), packet_data, evdataOutData(63 downto 0), packetInnerLast(X),
+				bufferOutValid(X), bufferOutReady(X), bufferOutDataArr(X)(64+511 downto 64), bufferOutDataArr(X)(63 downto 0), bufferOutLast(X),
 				bufferInProgFull(X), bufferOutOccup(X)
 			);
-		bufferOutDataArr(X) <= bufferOutDataArrWide(X)(512+64-1 downto 0);
+		--bufferOutDataArr(X) <= bufferOutDataArrWide(X)(512+64-1 downto 0);
 
 	end generate gen_bufs;
 

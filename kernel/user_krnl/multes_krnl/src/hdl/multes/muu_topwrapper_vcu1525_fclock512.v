@@ -439,7 +439,7 @@ module muu_TopWrapper_fclk512 #(
     assign para_data = 0;
 
 
-    
+    wire [127:0] sessDebugOut;
     
    muu_session_Top512  #(
                         .USER_BITS(USER_BITS)
@@ -469,7 +469,9 @@ module muu_TopWrapper_fclk512 #(
               .out_last(sesspackLast),
               .out_data(sesspackData),
               .out_meta(sesspackMeta),
-              .out_userid(sesspackUser)
+              .out_userid(sesspackUser),
+
+              .debug_out(sessDebugOut)
               );
 
     assign splitPreValid = sesspackValid;
@@ -590,6 +592,8 @@ module muu_TopWrapper_fclk512 #(
   reg[127:0] injectWord;    
 
 
+  wire[255:0] debugFromKVS;
+
    muu_Top_Module_LMem512
    #(   
             .IS_SIM(IS_SIM),
@@ -706,8 +710,11 @@ module muu_TopWrapper_fclk512 #(
           .par_from_proc_TREADY(par_from_proc_tready),
   
           
-          .debug(debug_kvs)
+          .debug(debugFromKVS)
    );
+
+
+assign debug_kvs = {sessDebugOut[31:0], debugFromKVS[255-32:0]};
 
 // .S00_AXIS_TDATA({fromKvsData[63:0],fromKvsData[127:64]}),
   
@@ -743,12 +750,12 @@ module muu_TopWrapper_fclk512 #(
                 .m_axis_tdata(ht_dramRdData_data_f)
                 ); 
 
-   nukv_fifogen #(
+   nukv_fifogen_passthrough #(
             .DATA_SIZE(64),
-            .ADDR_BITS(6)
+            .ADDR_BITS(4)
         ) fifo_f_dramrdcmd (
-                .clk(aclk),
-                .rst(reset),
+                .s_axis_clk(aclk),
+                .s_axis_rst(reset),
                 .s_axis_tvalid(ht_cmd_dramRdData_valid_f),
                 .s_axis_tready(ht_cmd_dramRdData_ready_f),
                 .s_axis_tdata(ht_cmd_dramRdData_data_f),  
@@ -1007,6 +1014,9 @@ nukv_fifogen_passthrough #(
   reg[15:0] derMetaLen;
 
   reg[7:0] dataTokens;
+  reg killNext;
+  reg killThis;
+  reg waitingForFirstPacket;
 
   wire out_meta_valid;
   reg out_meta_ready;
@@ -1026,14 +1036,22 @@ nukv_fifogen_passthrough #(
       end
     end
 
+
     always @(posedge aclk) begin
       if(reset) begin
         m_axis_tx_metadata_TDATA <= 0;
         m_axis_tx_metadata_TVALID <= 0;
         out_meta_ready <= 0;      
         waitingForStatusWord <= 0;
+        waitingForFirstPacket <= 1;
         dataTokens <= 0;
+        killThis <= 0;
+        killNext <= 0;
       end else begin
+
+        if (finalOutValid==1) begin
+          waitingForFirstPacket <= 0;
+        end
         
         if (m_axis_tx_metadata_TREADY==1 && m_axis_tx_metadata_TVALID==1) begin
           m_axis_tx_metadata_TVALID <= 0;
@@ -1047,7 +1065,12 @@ nukv_fifogen_passthrough #(
           dataTokens <= dataTokens-1;
         end
 
-        if (waitingForStatusWord==0 && out_meta_ready==0) begin
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin          
+            killThis <= killNext;       
+            killNext <= 0; 
+        end
+
+        if (waitingForStatusWord==0 && out_meta_ready==0 && killNext==0) begin
 
           if (m_axis_tx_metadata_TREADY==1) begin
             m_axis_tx_metadata_TVALID <= out_meta_valid;
@@ -1058,19 +1081,24 @@ nukv_fifogen_passthrough #(
             end
           end
 
-        end else if (waitingForStatusWord==1 && out_meta_ready==0) begin
+        end else if (waitingForStatusWord==1 && out_meta_ready==0 && killNext==0) begin
 
           if (s_axis_tx_status_TVALID==1) begin
             waitingForStatusWord <= waitingForStatusWord-1;
 
-            if (s_axis_tx_status_TDATA[63:62]==0) begin
-              // no error        
+            if (s_axis_tx_status_TDATA[63:62]==0 || s_axis_tx_status_TDATA[63:62]==1) begin
+              // no error   or no connection (1)
               out_meta_ready <= 1;
               dataTokens <= dataTokens+1;
 
               if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
                 dataTokens <= dataTokens;
+              end              
+
+              if (s_axis_tx_status_TDATA[63:62]==1) begin
+                killNext <= 1;      
               end
+
             end
           end
 
@@ -1127,7 +1155,7 @@ nukv_fifogen_passthrough #(
                         );              
    
    
-   assign   m_axis_tx_data_TVALID = dataTokens==0 ? 0 : finalOutValid ;
+   assign   m_axis_tx_data_TVALID = dataTokens==0 ? 0 : (finalOutValid & !killThis);
    assign   m_axis_tx_data_TDATA = finalOutData[511:0];
    //assign   m_axis_tx_data_TKEEP = 8'b11111111;
    assign   m_axis_tx_data_TLAST = finalOutLast;

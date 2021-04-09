@@ -142,6 +142,8 @@ architecture beh of muu_replicate_CentralSM is
 	constant OPCODE_SYNCRESP   : integer := 6;
 	constant OPCODE_SYNCCOMMIT : integer := 7;
 
+	constant OPCODE_FAKESYNCREQ    : integer := 12;
+
 	constant OPCODE_UNVERSIONEDWRITE : integer := 31;		
 	constant OPCODE_UNVERSIONEDDELETE : integer := 47;
 
@@ -696,6 +698,17 @@ begin
 										else
 											error_valid  <= '1';
 											error_opcode <= "1000" & inCmdOpCode(3 downto 0);
+
+											-- we'll resend proposals between this and last acked...
+											if (inCmdZxid_I <= proposedZxid(conv_integer(inCmdUser_I))) then
+												preloadMyZxid      <= myZxid(conv_integer(inCmdUser_I));
+												preloadProposedZxid <= proposedZxid(conv_integer(inCmdUser_I));											
+
+												inCmdOpCode      <= std_logic_vector(conv_unsigned(OPCODE_FAKESYNCREQ, 8));
+												myState    <= ST_HANDLEOP;
+												inCmdReady <= '0';
+											end if;
+
 										end if;
 									else
 										error_valid  <= '1';
@@ -1065,11 +1078,11 @@ begin
 									end if;
 
 								else
-									--myState <= ST_REQUESTSYNC;
-									--myState      <= ST_HANDLEOP;									
-									--inCmdReady   <= '0';
-									myState    <= ST_WAITOP;
-									inCmdReady <= '1';
+									myState <= ST_REQUESTSYNC;
+									---myState      <= ST_HANDLEOP;									
+									inCmdReady   <= '0';
+									--myState    <= ST_WAITOP;
+									--inCmdReady <= '1';
 
 									error_valid  <= '1';
 									error_opcode <= "1010" & inCmdOpCode_I(3 downto 0);
@@ -1095,19 +1108,47 @@ begin
 									proposedZxid(conv_integer(inCmdUser)) <= preloadMyZxid;
 								end if;
 
-								if (preloadProposedZxid - inCmdZxid < 128) then
+								if (myZxid(conv_integer(inCmdUser)) - inCmdZxid < 128) then
 									myState    <= ST_GETLOGSYNC;
 									inCmdReady <= '0';
 								else
 									myState <= ST_WAITOP; --ST_DRAMSYNC;
-									if (syncPrepare = '0') then
-										syncModeWaited <= (others => '0');
-										syncPeerId     <= inCmdPeerID(PEER_BITS-1 downto 0);
-									end if;
-									syncPrepare <= '1';
+									--if (syncPrepare = '0') then
+									--	syncModeWaited <= (others => '0');
+									--	syncPeerId     <= inCmdPeerID(PEER_BITS-1 downto 0);
+									--end if;
+									--syncPrepare <= '1';
+
+									--WE CAN'T SYNC FROM THAT FAR...
+									error_valid <= '1';
+									error_opcode <= "10011001";
 									inCmdReady <= '1';
 								end if;
 
+
+							when (OPCODE_FAKESYNCREQ) =>
+
+								-- we'll pretend that the request was to sync everything since the last commit!
+				
+								syncZxid(conv_integer(inCmdUser)) <= peerZxidCmt(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & inCmdPeerId(PEER_BITS - 1 downto 0)))+1;
+								preloadSyncZxid <= peerZxidCmt(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & inCmdPeerId(PEER_BITS - 1 downto 0)))+1;					
+								
+								if (myZxid(conv_integer(inCmdUser)) > peerZxidCmt(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & inCmdPeerId(PEER_BITS - 1 downto 0)))) then
+									myState    <= ST_GETLOGSYNC;
+									inCmdReady <= '0';
+								else
+									myState <= ST_WAITOP; --ST_DRAMSYNC;
+									--if (syncPrepare = '0') then
+									--	syncModeWaited <= (others => '0');
+									--	syncPeerId     <= inCmdPeerID(PEER_BITS-1 downto 0);
+									--end if;
+									--syncPrepare <= '1';
+
+									--WE CAN'T SYNC FROM THAT FAR...
+									error_valid <= '1';
+									error_opcode <= "11011101";
+									inCmdReady <= '1';
+								end if;
 
 
 							when (OPCODE_SYNCDRAM) =>
@@ -1760,6 +1801,8 @@ begin
 								cmd_out_data(CMD_TYPE_LEN + CMD_TYPE_LOC - 1 downto CMD_TYPE_LOC) <= std_logic_vector(conv_unsigned(OPCODE_SYNCLEADER, 8));
 							end if;
 
+							cmd_out_data(CMD_HTOP_LOC + CMD_HTOP_LEN - 1 downto CMD_HTOP_LOC)             <= std_logic_vector(conv_unsigned(HTOP_GETRAW, CMD_HTOP_LEN));
+
 							cmd_out_data(CMD_EPOCH_LOC + CMD_EPOCH_LEN - 1 downto CMD_EPOCH_LOC)    <= myEpoch(conv_integer(inCmdUser)); -- RESPONSE TIME DEBUG
 							cmd_out_data(CMD_ZXID_LOC + CMD_ZXID_LEN - 1 downto CMD_ZXID_LOC)       <= preloadSyncZxid;
 							cmd_out_data(PEER_BITS + CMD_PEERID_LOC - 1 downto CMD_PEERID_LOC)       			 <= preloadMyPeerId;
@@ -1772,7 +1815,7 @@ begin
 						if (foundInLog = '1' and cmd_out_ready = '1') then
 							cmdSent    <= '0';
 							foundInLog <= '0';
-							if (preloadSyncZxid >= proposedZxid(conv_integer(inCmdUser))) then
+							if (preloadSyncZxid >= myZxid(conv_integer(inCmdUser)))then --proposedZxid(conv_integer(inCmdUser))) then
 								myState    <= ST_WAITOP;
 								inCmdReady <= '1';
 							else
@@ -1780,6 +1823,7 @@ begin
 								peerZxidAck(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & inCmdPeerId(PEER_BITS - 1 downto 0))) <= preloadSyncZxid;
 								peerZxidCmt(conv_integer(inCmdUser(USER_BITS - 1 downto 0) & inCmdPeerId(PEER_BITS - 1 downto 0))) <= preloadSyncZxid;
 								syncZxid(conv_integer(inCmdUser))                                                                  <= preloadSyncZxid + 1;
+								preloadSyncZxid <= preloadSyncZxid + 1;
 							end if;
 						end if;
 

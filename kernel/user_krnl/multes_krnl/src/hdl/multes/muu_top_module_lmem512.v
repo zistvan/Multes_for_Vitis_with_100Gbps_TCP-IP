@@ -661,7 +661,7 @@ muu_RequestSplit512 #(
 
 nukv_fifogen #(
     .DATA_SIZE(65),
-    .ADDR_BITS(8)
+    .ADDR_BITS(4)
 ) fifo_key_toctrl (
     .clk(clk),
     .rst(rst),
@@ -677,7 +677,7 @@ nukv_fifogen #(
 
 nukv_fifogen #(
     .DATA_SIZE(VALUE_WIDTH+16+1),
-    .ADDR_BITS(8) //!!!
+    .ADDR_BITS(11) //!!!
 ) fifo_value (
     .clk(clk),
     .rst(rst),
@@ -694,7 +694,7 @@ nukv_fifogen #(
 
 nukv_fifogen #(
     .DATA_SIZE(EXT_META_WIDTH),
-    .ADDR_BITS(8)
+    .ADDR_BITS(4)
 ) fifo_meta_toctrl (
     .clk(clk),
     .rst(rst),
@@ -1928,8 +1928,10 @@ reg[191:0] data_aux;
 
       	//data_aux <= {writeout_data[64+163+32 +: 10],towrite_b_data[128 +: 163]};
         //data_aux <= {reqsplit_debug, replicate_debug_data[23:0], 3'd0, replicate_error_valid, replicate_error_opcode, write_module_debug, 5'd0, s_axis_tuserid, s_axis_tdata};
-        data_aux <= {m_axis_tdata, write_module_debug, 5'd0, s_axis_tuserid, s_axis_tdata[127: 128-24], s_axis_tdata[63:0]};
-      
+       
+       // data_aux <= {m_axis_tdata, write_module_debug, 5'd0, s_axis_tuserid, s_axis_tdata[127: 128-24], s_axis_tdata[63:0]};
+       data_aux <= {m_axis_tdata, write_module_debug, s_axis_tdata[127: 128-24], s_axis_tdata[63:0], replicate_error_opcode};
+
       debug_r[0] <=  s_axis_tvalid  ;
       debug_r[1] <=  s_axis_tready;
       debug_r[2] <=  s_axis_tlast;
@@ -1989,16 +1991,18 @@ reg[191:0] data_aux;
       debug_r[52] <=    m_axis_tvalid;
       debug_r[53] <=    m_axis_tready;
 
-      debug_r[54] <= outputErrorHead | reqsplit_debug[0] | replicate_error_valid;
+      debug_r[54] <=    m_axis_tlast;
 
-      debug_r[55] <= outputErrorHead;
+      debug_r[55] <= 	firstOutCycle;
       
-      debug_r[56] <= reqsplit_debug[0];
+      debug_r[56] <= replicate_error_valid;
       //debug_r[56] <= pred_eval_error;
 
       debug_r[57] <= malloc_error_valid;
 
-      debug_r[58] <= malloc_valid;
+      debug_r[58] <= reqsplit_debug[0];
+
+      debug_r[59] <= 0;
 
       debug_r[64 +: 192] <= data_aux;
 
