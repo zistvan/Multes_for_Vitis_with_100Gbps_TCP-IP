@@ -140,6 +140,7 @@ always @ (posedge clk)
 					opcode <= opcode_i;
 
 					if (opcode_i == OPCODE_PROPOSAL 
+						|| opcode_i == OPCODE_SYNCRESP						
 						|| opcode_i == OPCODE_WRITEREQ 
 						|| opcode_i==OPCODE_FLUSHDATASTORE 
 						|| opcode_i == OPCODE_READREQ

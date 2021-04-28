@@ -65,6 +65,7 @@ localparam [3:0]
 	ST_HEADER = 1,	
 	ST_KEY = 2,
 	ST_VALUE = 3,
+	ST_KEY_RRAW = 5,
 	ST_KEY_REPL = 6,
 	ST_VALUE_REPL = 7,
 	ST_DROP = 4,
@@ -113,7 +114,7 @@ wire[7:0] repopcode;
 assign repopcode = input_data[KEY_WIDTH+144 +: 8];
 
 assign is_write = (htopcode==HTOP_SETCUR || htopcode==HTOP_SETNEXT || htopcode==HTOP_FLIPPOINT) ? 1:0;
-assign is_forme = (htopcode==HTOP_IGNORE || htopcode==HTOP_FLUSH) ? 0:1;
+assign is_forme = (htopcode==HTOP_IGNORE || htopcode==HTOP_FLUSH || htopcode==HTOP_GETRAW ) ? 0:1;
 assign send_answer = ((htopcode==HTOP_SETNEXT && repopcode==OPCODE_PROPOSAL) || (htopcode==HTOP_FLIPPOINT && repopcode==8'h80)) ? 0:1;
 
 reg [KEY_WIDTH+HEADER_WIDTH+META_WIDTH-1:0] lastInputForSet [2**USER_BITS-1:0] ;
@@ -250,6 +251,17 @@ always @(posedge clk) begin
 						output_word[63:0] <= {22'h0, (input_data[KEY_WIDTH+META_WIDTH+32 +: 10]/8), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
 						output_word[511:64] <= 0;
 					end
+					else if (htopcode==HTOP_GETRAW && (repopcode==OPCODE_PROPOSAL || repopcode==OPCODE_SYNCRESP)) begin
+						output_valid <= 1;		
+						hasvalue <= input_data[KEY_WIDTH+META_WIDTH+32 +: 10]==0 ? 0 : 1;
+						toread <= input_data[KEY_WIDTH+META_WIDTH+32 +: 10];
+						state <= ST_HEADER;
+						meta_data <= input_data[KEY_WIDTH +: META_WIDTH];
+						key_data <= input_data[KEY_WIDTH-1:0];
+						input_ready <= 1;
+						output_word[63:0] <= {22'h0, ((input_data[KEY_WIDTH+META_WIDTH+32 +: 10]/8)+1), input_data[KEY_WIDTH+144 +: 8] , input_data[KEY_WIDTH+88 +: 8], 16'hffff};							
+						output_word[511:64] <= 0;
+					end
 					else if (htopcode==HTOP_IGNORE && repopcode==OPCODE_PROPOSAL) begin
 						output_valid <= 1;		
 						hasvalue <= lastInputForSet[current_userid][KEY_WIDTH+META_WIDTH+32 +: 10]==0 ? 0 : 1;
@@ -351,7 +363,11 @@ always @(posedge clk) begin
 
 			ST_HEADER: begin
 				if (output_ready==1 && (hasvalue==0 || cond_valid==1 || is_forme==0)) begin
-					cond_ready <= hasvalue & is_forme;
+					if (htopcode!=HTOP_GETRAW) begin 
+						cond_ready <= hasvalue & is_forme;
+					end else begin
+						cond_ready <= hasvalue;
+					end
 
 					output_valid <= 1;
 					output_word[63:0] <= {16'h0, meta_data[128 +: 16], meta_data[96 +: 32]}; // prints out the pointer and length
@@ -364,7 +380,11 @@ always @(posedge clk) begin
 						if (is_forme==1) begin
 							state <= ST_VALUE;	
 						end else begin
-							state <= ST_KEY_REPL;					
+							if (htopcode!=HTOP_GETRAW) begin 
+								state <= ST_KEY_REPL;					
+							end else begin
+								state <= ST_KEY_RRAW;					
+							end
 						end
 					end else if (hasvalue==1 && toread>0 && dropit==1) begin							
 						state <= ST_DROP;						
@@ -428,6 +448,18 @@ always @(posedge clk) begin
 						end;
 				end
 			end
+
+			ST_KEY_RRAW: begin
+				if (output_ready==1 && value_valid==1) begin
+
+					
+					output_valid <= 1;
+					output_word[63:0] <= key_data;
+					output_word[511:64] <= 0;
+										
+					state <= ST_VALUE;
+				end
+			end					
 
 			ST_KEY_REPL: begin
 				if (output_ready==1 && repl_in_valid==1) begin
