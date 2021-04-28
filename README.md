@@ -1,16 +1,16 @@
 # Multes for Alveo with Vitis 100Gbps TCP Networking
 
-This project iports an experimental multi-tenant key-value store, Multes, to the Alveo FPGAs with 100Gbps networking. This is achieved by expanding the [original 100Gbps TCP/IP stack repository](https://github.com/fpgasystems/Vitis_with_100Gbps_TCP-IP) with a custom kernel. 
+This project ports an experimental multi-tenant key-value store, Multes, to the Alveo FPGAs with 100Gbps networking. This is achieved by expanding the [original 100Gbps TCP/IP stack repository](https://github.com/fpgasystems/Vitis_with_100Gbps_TCP-IP) with a custom kernel. 
 
 For the README of the entire project, including the TCP stack, etc., please see [the original README](https://github.com/fpgasystems/Vitis_with_100Gbps_TCP-IP/blob/master/README.md).
 
 ## Background on Multes
 
-Multes [1](https://zistvan.github.io/doc/multes-fpl18.pdf) is the multi-tenant incarnation of Caribou [2](https://zistvan.github.io/doc/vldb17-caribou.pdf). It implements **smart distributed storage** built with FPGAs that can efficiently be shared by a large number of tenants. Each node stores key-value pairs in main memory and exposes a simple interface over TCP/IP that software clients can connect to.
+[Multes](https://zistvan.github.io/doc/multes-fpl18.pdf) is the multi-tenant incarnation of [Caribou](https://zistvan.github.io/doc/vldb17-caribou.pdf). It implements **smart distributed storage** built with FPGAs that can efficiently be shared by a large number of tenants. Each node stores key-value pairs in main memory and exposes a simple interface over TCP/IP that software clients can connect to.
 
 It is **smart** because it is possible to offload filtering into the storage nodes. The nodes can also perform scans on the data. In this design filtering is a combination of regular expression matching and predicate evaluation. Different types of processing can, however, easily be added to the processing pipeline.
 
-It is **distributed** because it runs on multiple FPGAs that replicate the data using a leader-based consensus protocol [3](https://zistvan.github.io/doc/nsdi16-istvan-rev1.pdf) that is both low latency and high throughput.
+It is **distributed** because it runs on multiple FPGAs that replicate the data using a [leader-based consensus protocol](https://zistvan.github.io/doc/nsdi16-istvan-rev1.pdf) that is both low latency and high throughput.
 
 It is **storage** because it stores key-value pairs in a Cuckoo hash table and implements slab-based memory allocation. The current design uses DRAM (HBM, in the case of the Alveo boards) to store data but it should work well with emerging non-volatile memory technologies.
 
@@ -24,8 +24,8 @@ It is **storage** because it stores key-value pairs in a Cuckoo hash table and i
 
 The files relevant to the project are organized as follows:
  
-  - host/multes_krnl -- the host file of the project. It takes one important argument: the IP address to use for the FPGA.
-  - kernel/user_krnl/multes_krnl/ -- this is where the hardware design lives (as well as the testing client). In the src/ folder you'll find all the HDL sources and IP cores needed by the design. In the client/ folder you'll find the software client to Multes, written in Go.
+  - ```host/multes_krnl``` -- the host file of the project. It takes one important argument: the IP address to use for the FPGA.
+  - ```kernel/user_krnl/multes_krnl/``` -- this is where the hardware design lives (as well as the testing client). In the src/ folder you'll find all the HDL sources and IP cores needed by the design. In the client/ folder you'll find the software client to Multes, written in Go.
 
 ## Integration with Alveo U250
 
